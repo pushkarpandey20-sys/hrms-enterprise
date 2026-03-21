@@ -14,9 +14,13 @@ async function bootstrap() {
     await prisma.$connect();
     logger.info('✅  PostgreSQL connected');
 
-    // Redis
-    await connectRedis();
-    logger.info('✅  Redis connected');
+    // Redis (optional — background jobs won't work without it)
+    try {
+      await connectRedis();
+      logger.info('✅  Redis connected');
+    } catch (redisErr) {
+      logger.warn('⚠️  Redis not available, continuing without it:', redisErr);
+    }
 
     // HTTP + Socket.io
     const httpServer = http.createServer(app);
