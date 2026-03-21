@@ -1103,10 +1103,26 @@ model AccessReviewAssignment {
   reviewer   User_        @relation("Reviewer", fields: [reviewerId], references: [id])
 }
 
-enum ScopeType    { GLOBAL DEPARTMENT BRANCH }
-enum PermEffect   { GRANT DENY }
-enum AccessReviewStatus { PENDING IN_PROGRESS COMPLETED CANCELLED }
-enum ReviewDecision     { RETAIN REVOKE MODIFY }
+enum ScopeType {
+  GLOBAL
+  DEPARTMENT
+  BRANCH
+}
+enum PermEffect {
+  GRANT
+  DENY
+}
+enum AccessReviewStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+enum ReviewDecision {
+  RETAIN
+  REVOKE
+  MODIFY
+}
 
 // ═══════════════════════════════════════════════════════════════
 // MODULE: ASSET REPAIR REQUEST SYSTEM
@@ -1197,11 +1213,29 @@ model RepairComment {
   ticket     RepairTicket @relation(fields: [ticketId], references: [id])
 }
 
-enum RepairPriority { LOW MEDIUM HIGH CRITICAL }
-enum RepairCategory { HARDWARE SOFTWARE NETWORK PERIPHERAL OTHER }
-enum RepairStatus   {
-  SUBMITTED UNDER_REVIEW APPROVED REJECTED
-  IN_REPAIR QC_PENDING QC_FAILED CLOSED CANCELLED
+enum RepairPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+enum RepairCategory {
+  HARDWARE
+  SOFTWARE
+  NETWORK
+  PERIPHERAL
+  OTHER
+}
+enum RepairStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  IN_REPAIR
+  QC_PENDING
+  QC_FAILED
+  CLOSED
+  CANCELLED
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1347,15 +1381,56 @@ model PIPCheckIn {
   pip        PIPPlan @relation(fields: [pipId], references: [id])
 }
 
-enum CycleType   { ANNUAL SEMI_ANNUAL QUARTERLY }
-enum CycleStatus { DRAFT ACTIVE CLOSED }
-enum GoalCategory { INDIVIDUAL TEAM COMPANY }
-enum GoalType    { OKR SMART KPI }
-enum GoalStatus  { ACTIVE COMPLETED CANCELLED ON_HOLD }
-enum ReviewType  { SELF MANAGER PEER HR_FINAL }
-enum ReviewStatus { DRAFT SUBMITTED ACKNOWLEDGED CLOSED }
-enum FeedbackRelation { MANAGER PEER DIRECT_REPORT CROSS_FUNCTIONAL }
-enum PIPStatus   { ACTIVE COMPLETED_SUCCESS COMPLETED_FAIL WITHDRAWN }
+enum CycleType {
+  ANNUAL
+  SEMI_ANNUAL
+  QUARTERLY
+}
+enum CycleStatus {
+  DRAFT
+  ACTIVE
+  CLOSED
+}
+enum GoalCategory {
+  INDIVIDUAL
+  TEAM
+  COMPANY
+}
+enum GoalType {
+  OKR
+  SMART
+  KPI
+}
+enum GoalStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  ON_HOLD
+}
+enum ReviewType {
+  SELF
+  MANAGER
+  PEER
+  HR_FINAL
+}
+enum ReviewStatus {
+  DRAFT
+  SUBMITTED
+  ACKNOWLEDGED
+  CLOSED
+}
+enum FeedbackRelation {
+  MANAGER
+  PEER
+  DIRECT_REPORT
+  CROSS_FUNCTIONAL
+}
+enum PIPStatus {
+  ACTIVE
+  COMPLETED_SUCCESS
+  COMPLETED_FAIL
+  WITHDRAWN
+}
 
 // ═══════════════════════════════════════════════════════════════
 // MODULE: ESS HELPDESK
@@ -1461,10 +1536,32 @@ model KnowledgeArticle {
   updatedAt      DateTime @updatedAt
 }
 
-enum TicketPriority { LOW MEDIUM HIGH URGENT }
-enum TicketStatus   { OPEN IN_PROGRESS ON_HOLD RESOLVED CLOSED }
-enum TicketType     { IT HR FACILITIES PAYROLL OTHER }
-enum TicketChannel  { WEB MOBILE EMAIL WALK_IN }
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  ON_HOLD
+  RESOLVED
+  CLOSED
+}
+enum TicketType {
+  IT
+  HR
+  FACILITIES
+  PAYROLL
+  OTHER
+}
+enum TicketChannel {
+  WEB
+  MOBILE
+  EMAIL
+  WALK_IN
+}
 
 // ═══════════════════════════════════════════════════════════════
 // MODULE: OFFBOARDING WORKFLOW
@@ -1541,8 +1638,39 @@ model ExitInterview {
   case             OffboardingCase @relation(fields: [caseId], references: [id])
 }
 
-enum ExitType      { RESIGNATION TERMINATION RETIREMENT MUTUAL_SEPARATION ABSCONDING DEATH }
-enum OffboardStatus { INITIATED IN_PROGRESS PENDING_CLEARANCE FNF_PENDING COMPLETED }
-enum ChecklistStatus { PENDING IN_PROGRESS COMPLETED SKIPPED }
-enum ClearanceStatus { PENDING CLEARED BLOCKED }
-enum ExitReason    { BETTER_OPPORTUNITY COMPENSATION WORK_CULTURE MANAGEMENT RELOCATION PERSONAL RETIREMENT OTHER }
+enum ExitType {
+  RESIGNATION
+  TERMINATION
+  RETIREMENT
+  MUTUAL_SEPARATION
+  ABSCONDING
+  DEATH
+}
+enum OffboardStatus {
+  INITIATED
+  IN_PROGRESS
+  PENDING_CLEARANCE
+  FNF_PENDING
+  COMPLETED
+}
+enum ChecklistStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  SKIPPED
+}
+enum ClearanceStatus {
+  PENDING
+  CLEARED
+  BLOCKED
+}
+enum ExitReason {
+  BETTER_OPPORTUNITY
+  COMPENSATION
+  WORK_CULTURE
+  MANAGEMENT
+  RELOCATION
+  PERSONAL
+  RETIREMENT
+  OTHER
+}
