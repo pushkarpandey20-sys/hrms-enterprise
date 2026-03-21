@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "HRMS",
+    "slug": "hrms-enterprise",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0A0F1E"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.hrms.enterprise",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Used for face verification during attendance",
+        "NSLocationWhenInUseUsageDescription": "Used to verify your location during attendance",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Used for background WiFi attendance detection",
+        "NSFaceIDUsageDescription": "Used for secure login"
+      }
+    },
+    "android": {
+      "adaptiveIcon": { "foregroundImage": "./assets/adaptive-icon.png", "backgroundColor": "#0A0F1E" },
+      "package": "com.hrms.enterprise",
+      "permissions": ["CAMERA", "ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION", "ACCESS_BACKGROUND_LOCATION", "USE_BIOMETRIC", "USE_FINGERPRINT", "RECEIVE_BOOT_COMPLETED", "VIBRATE"]
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      ["expo-location", { "locationAlwaysAndWhenInUsePermission": "HRMS needs location for attendance verification" }],
+      ["expo-camera", { "cameraPermission": "HRMS needs camera for selfie attendance" }],
+      ["expo-notifications", { "icon": "./assets/notification-icon.png", "color": "#3B82F6" }]
+    ],
+    "scheme": "hrms"
+  }
+}

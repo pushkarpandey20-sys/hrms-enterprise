@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(expo --version)",
+      "Bash(npx shadcn-ui:*)"
+    ]
+  }
+}

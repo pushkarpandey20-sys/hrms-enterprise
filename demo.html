@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>HRMS Enterprise — Interactive Demo</title>
+<style>
+  :root{--navy:#0A0F1E;--midnight:#111827;--surface:#1a2235;--border:rgba(255,255,255,0.08);--electric:#3B82F6;--gold:#F59E0B;--text:rgba(255,255,255,0.9);--muted:rgba(255,255,255,0.5);--dim:rgba(255,255,255,0.25);}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--navy);color:var(--text);display:flex;height:100vh;overflow:hidden;}
+  /* Sidebar */
+  #sidebar{width:240px;background:var(--midnight);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;transition:width .25s;}
+  #sidebar.collapsed{width:64px;}
+  .logo{display:flex;align-items:center;gap:12px;padding:18px 16px;border-bottom:1px solid var(--border);}
+  .logo-icon{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#3B82F6,#6366F1);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+  .logo-text{font-weight:700;font-size:17px;white-space:nowrap;overflow:hidden;}
+  .logo-sub{font-size:10px;color:var(--muted);font-weight:400;}
+  nav{flex:1;overflow-y:auto;padding:8px 0;}
+  .nav-group{margin:8px 0;}
+  .nav-label{font-size:10px;font-weight:600;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;padding:4px 16px 2px;white-space:nowrap;overflow:hidden;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;border-radius:0;transition:background .15s;position:relative;white-space:nowrap;overflow:hidden;}
+  .nav-item:hover{background:rgba(255,255,255,0.04);}
+  .nav-item.active{background:rgba(59,130,246,0.12);color:var(--electric);}
+  .nav-item.active::before{content:'';position:absolute;left:0;top:4px;bottom:4px;width:3px;background:var(--electric);border-radius:0 3px 3px 0;}
+  .nav-icon{font-size:16px;flex-shrink:0;width:20px;text-align:center;}
+  .nav-text{font-size:13px;font-weight:500;}
+  .sidebar-footer{padding:12px 16px;border-top:1px solid var(--border);}
+  .user-chip{display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px;border-radius:10px;transition:background .15s;}
+  .user-chip:hover{background:rgba(255,255,255,0.04);}
+  .avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#3B82F6,#8B5CF6);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
+  .user-info{overflow:hidden;}
+  .user-name{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .user-role{font-size:10px;color:var(--muted);}
+  /* Main */
+  #main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;}
+  /* Topbar */
+  #topbar{height:56px;background:var(--midnight);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 24px;flex-shrink:0;}
+  .topbar-left{display:flex;align-items:center;gap:12px;}
+  .toggle-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:18px;padding:4px;}
+  .breadcrumb{font-size:13px;color:var(--muted);}
+  .breadcrumb span{color:var(--text);}
+  .topbar-right{display:flex;align-items:center;gap:12px;}
+  .topbar-btn{background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--muted);cursor:pointer;font-size:13px;transition:all .15s;}
+  .topbar-btn:hover{background:rgba(255,255,255,0.1);color:var(--text);}
+  .notif-dot{width:8px;height:8px;background:var(--electric);border-radius:50%;display:inline-block;margin-left:4px;}
+  /* Content */
+  #content{flex:1;overflow-y:auto;padding:24px;}
+  /* Pages */
+  .page{display:none;}
+  .page.active{display:block;}
+  /* Cards */
+  .glass{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:16px;}
+  .page-title{font-size:22px;font-weight:700;letter-spacing:-.02em;}
+  .page-sub{font-size:13px;color:var(--muted);margin-top:4px;}
+  /* KPI Grid */
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;margin:20px 0;}
+  .kpi-card{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:14px;padding:18px;cursor:default;}
+  .kpi-icon{font-size:22px;margin-bottom:10px;}
+  .kpi-val{font-size:26px;font-weight:700;}
+  .kpi-label{font-size:12px;color:var(--muted);margin-top:2px;}
+  .kpi-delta{font-size:11px;margin-top:6px;}
+  .up{color:#34D399;} .down{color:#F87171;} .neutral{color:var(--muted);}
+  /* Charts area */
+  .chart-grid{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin:16px 0;}
+  .chart-box{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:14px;padding:20px;}
+  .chart-title{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:16px;text-transform:uppercase;letter-spacing:.06em;}
+  .bar-chart{display:flex;align-items:flex-end;gap:8px;height:100px;}
+  .bar{flex:1;background:linear-gradient(180deg,#3B82F6,#6366F1);border-radius:4px 4px 0 0;position:relative;transition:all .3s;cursor:pointer;}
+  .bar:hover{filter:brightness(1.2);}
+  .bar-label{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--dim);white-space:nowrap;}
+  .donut-container{display:flex;align-items:center;justify-content:center;gap:20px;}
+  .donut{position:relative;}
+  svg.donut-svg{transform:rotate(-90deg);}
+  .donut-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;}
+  .donut-num{font-size:18px;font-weight:700;}
+  .donut-desc{font-size:9px;color:var(--muted);}
+  .legend{display:flex;flex-direction:column;gap:6px;}
+  .legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);}
+  .legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  /* Table */
+  .table-wrap{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin:16px 0;}
+  .table-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border);}
+  .table-title{font-size:14px;font-weight:600;}
+  table{width:100%;border-collapse:collapse;}
+  th{padding:10px 16px;text-align:left;font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);}
+  td{padding:12px 16px;font-size:13px;border-bottom:1px solid rgba(255,255,255,0.04);}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:rgba(255,255,255,0.02);}
+  .badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:600;border:1px solid;}
+  .badge-green{color:#34D399;background:rgba(52,211,153,0.1);border-color:rgba(52,211,153,0.3);}
+  .badge-blue{color:#60A5FA;background:rgba(96,165,250,0.1);border-color:rgba(96,165,250,0.3);}
+  .badge-yellow{color:#FBBF24;background:rgba(251,191,36,0.1);border-color:rgba(251,191,36,0.3);}
+  .badge-red{color:#F87171;background:rgba(248,113,113,0.1);border-color:rgba(248,113,113,0.3);}
+  .badge-purple{color:#A78BFA;background:rgba(167,139,250,0.1);border-color:rgba(167,139,250,0.3);}
+  .badge-gray{color:rgba(255,255,255,0.4);background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.1);}
+  /* Avatar chip */
+  .emp-chip{display:flex;align-items:center;gap:8px;}
+  .emp-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
+  /* Buttons */
+  .btn-primary{background:var(--electric);color:#fff;border:none;border-radius:10px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;}
+  .btn-primary:hover{background:#2563EB;box-shadow:0 0 20px rgba(59,130,246,0.4);}
+  .btn-ghost{background:rgba(255,255,255,0.06);color:var(--muted);border:1px solid var(--border);border-radius:10px;padding:8px 16px;font-size:13px;cursor:pointer;transition:all .15s;}
+  .btn-ghost:hover{background:rgba(255,255,255,0.1);color:var(--text);}
+  /* Progress bar */
+  .progress{height:6px;background:rgba(255,255,255,0.06);border-radius:99px;overflow:hidden;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,#3B82F6,#6366F1);border-radius:99px;transition:width .6s ease;}
+  /* Tabs */
+  .tabs{display:flex;gap:2px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:12px;padding:3px;width:fit-content;margin:16px 0;}
+  .tab{padding:7px 16px;border-radius:9px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .15s;border:none;background:none;}
+  .tab.active{background:var(--electric);color:#fff;box-shadow:0 2px 12px rgba(59,130,246,0.4);}
+  /* Pipeline */
+  .pipeline{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;margin:16px 0;}
+  .pipeline-col{min-width:200px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:12px;padding:12px;}
+  .pipeline-header{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;}
+  .pipeline-count{background:rgba(255,255,255,0.08);border-radius:20px;padding:1px 6px;font-size:10px;}
+  .ticket-card{background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px;cursor:pointer;transition:all .15s;}
+  .ticket-card:hover{background:rgba(255,255,255,0.07);border-color:rgba(59,130,246,0.3);}
+  .ticket-title{font-size:12px;font-weight:600;margin-bottom:4px;}
+  .ticket-meta{font-size:10px;color:var(--muted);}
+  /* Matrix */
+  .matrix-table{width:100%;border-collapse:collapse;font-size:11px;}
+  .matrix-table th{padding:6px 8px;text-align:left;color:var(--dim);font-weight:500;border-bottom:1px solid var(--border);}
+  .matrix-table td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.03);}
+  .perm-check{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto;font-size:10px;}
+  .perm-yes{background:rgba(52,211,153,0.15);border:1px solid rgba(52,211,153,0.3);color:#34D399;}
+  .perm-no{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);}
+  /* Star rating */
+  .stars{color:#F59E0B;letter-spacing:2px;}
+  /* Goal progress */
+  .goal-card{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;}
+  .goal-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+  .goal-title{font-size:13px;font-weight:600;}
+  .goal-pct{font-size:20px;font-weight:700;color:var(--electric);}
+  /* Checklist */
+  .checklist-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+  .check-circle{width:20px;height:20px;border-radius:50%;border:2px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;flex-shrink:0;}
+  .check-circle.done{background:rgba(52,211,153,0.2);border-color:#34D399;color:#34D399;}
+  .check-circle.done::after{content:'✓';font-size:11px;}
+  /* Stat row */
+  .stat-row{display:flex;gap:12px;margin:16px 0;flex-wrap:wrap;}
+  .stat-mini{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:12px;padding:14px 18px;flex:1;min-width:120px;}
+  .stat-mini-val{font-size:22px;font-weight:700;}
+  .stat-mini-label{font-size:11px;color:var(--muted);margin-top:2px;}
+  /* KB articles */
+  .article-item{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;cursor:pointer;transition:all .15s;}
+  .article-item:hover{background:rgba(255,255,255,0.06);border-color:rgba(59,130,246,0.3);}
+  .article-title{font-size:13px;font-weight:600;margin-bottom:4px;}
+  .article-meta{font-size:11px;color:var(--muted);display:flex;gap:12px;}
+  /* FnF */
+  .fnf-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px;}
+  .fnf-total{display:flex;justify-content:space-between;padding:12px 0;font-size:16px;font-weight:700;}
+  /* Input */
+  .input{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:9px 14px;color:#fff;font-size:13px;width:100%;outline:none;transition:border .15s;}
+  .input:focus{border-color:rgba(59,130,246,0.5);}
+  .input::placeholder{color:var(--dim);}
+  /* Scrollbar */
+  ::-webkit-scrollbar{width:5px;height:5px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:99px;}
+  /* Animations */
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .page.active{animation:fadeIn .2s ease}
+  @keyframes barGrow{from{height:0}to{height:var(--h)}}
+  /* Login page */
+  #login-screen{position:fixed;inset:0;background:var(--navy);display:flex;align-items:center;justify-content:center;z-index:999;}
+  .login-card{background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:24px;padding:40px;width:380px;}
+  .login-logo{display:flex;align-items:center;gap:12px;margin-bottom:32px;}
+  .login-title{font-size:24px;font-weight:700;margin-bottom:6px;}
+  .login-sub{font-size:13px;color:var(--muted);margin-bottom:28px;}
+  .form-group{margin-bottom:16px;}
+  .form-label{font-size:12px;color:var(--muted);margin-bottom:6px;display:block;}
+  .login-error{font-size:12px;color:#F87171;margin-top:-8px;margin-bottom:8px;display:none;}
+  .login-hint{font-size:11px;color:var(--dim);margin-top:16px;text-align:center;}
+  .login-hint code{background:rgba(255,255,255,0.08);padding:1px 5px;border-radius:4px;}
+  /* Tooltip */
+  [title]{cursor:help;}
+  /* Notification badge */
+  .notif-badge{background:var(--electric);color:#fff;border-radius:20px;padding:1px 6px;font-size:10px;font-weight:700;margin-left:4px;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-icon">🏢</div>
+      <div>
+        <div style="font-weight:700;font-size:18px;">HRMS Enterprise</div>
+        <div style="font-size:11px;color:var(--muted);">Powered by Cowork</div>
+      </div>
+    </div>
+    <div class="login-title">Welcome back</div>
+    <div class="login-sub">Sign in to your workspace</div>
+    <div class="form-group">
+      <label class="form-label">Email address</label>
+      <input class="input" id="email-input" type="email" placeholder="admin@acmecorp.com" value="admin@acmecorp.com"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input class="input" id="pass-input" type="password" placeholder="••••••••" value="Admin@123"/>
+    </div>
+    <div class="login-error" id="login-err">Invalid credentials. Use admin@acmecorp.com / Admin@123</div>
+    <button class="btn-primary" style="width:100%;padding:11px;font-size:14px;margin-top:4px;" onclick="doLogin()">Sign in</button>
+    <div class="login-hint">Demo: <code>admin@acmecorp.com</code> / <code>Admin@123</code></div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="logo">
+    <div class="logo-icon">🏢</div>
+    <div class="logo-text">HRMS<br><span class="logo-sub">Enterprise</span></div>
+  </div>
+  <nav id="nav">
+    <div class="nav-group">
+      <div class="nav-label">Main</div>
+      <div class="nav-item active" onclick="goto('dashboard',this)"><span class="nav-icon">📊</span><span class="nav-text">Dashboard</span></div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">People</div>
+      <div class="nav-item" onclick="goto('employees',this)"><span class="nav-icon">👥</span><span class="nav-text">Employees</span></div>
+      <div class="nav-item" onclick="goto('attendance',this)"><span class="nav-icon">🕐</span><span class="nav-text">Attendance</span></div>
+      <div class="nav-item" onclick="goto('leave',this)"><span class="nav-icon">📅</span><span class="nav-text">Leave</span></div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">Finance</div>
+      <div class="nav-item" onclick="goto('payroll',this)"><span class="nav-icon">💳</span><span class="nav-text">Payroll</span></div>
+      <div class="nav-item" onclick="goto('assets',this)"><span class="nav-icon">📦</span><span class="nav-text">Assets</span></div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">Enterprise</div>
+      <div class="nav-item" onclick="goto('rbac',this)"><span class="nav-icon">🔐</span><span class="nav-text">Access Control</span></div>
+      <div class="nav-item" onclick="goto('repair',this)"><span class="nav-icon">🔧</span><span class="nav-text">Asset Repair</span></div>
+      <div class="nav-item" onclick="goto('performance',this)"><span class="nav-icon">🎯</span><span class="nav-text">Performance</span></div>
+      <div class="nav-item" onclick="goto('helpdesk',this)"><span class="nav-icon">🎫</span><span class="nav-text">Helpdesk<span class="notif-badge">3</span></span></div>
+      <div class="nav-item" onclick="goto('offboarding',this)"><span class="nav-icon">🚪</span><span class="nav-text">Offboarding</span></div>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-chip">
+      <div class="avatar">SA</div>
+      <div class="user-info">
+        <div class="user-name">Super Admin</div>
+        <div class="user-role">admin@acmecorp.com</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div id="topbar">
+    <div class="topbar-left">
+      <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+      <div class="breadcrumb" id="breadcrumb">/ <span>Dashboard</span></div>
+    </div>
+    <div class="topbar-right">
+      <button class="topbar-btn" onclick="goto('helpdesk',document.querySelector('[onclick*=helpdesk]'))">🔔 Notifications <span class="notif-dot"></span></button>
+      <button class="topbar-btn">🌐 Acme Corp</button>
+      <button class="topbar-btn" onclick="logout()">⬡ Logout</button>
+    </div>
+  </div>
+  <div id="content">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-title">Dashboard</div>
+      <div class="page-sub">Welcome back, Super Admin · Friday, 20 March 2026</div>
+      <div class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-icon">👥</div><div class="kpi-val">247</div><div class="kpi-label">Total Employees</div><div class="kpi-delta up">↑ 12 this month</div></div>
+        <div class="kpi-card"><div class="kpi-icon">✅</div><div class="kpi-val">89<span style="font-size:14px;color:var(--muted)">%</span></div><div class="kpi-label">Attendance Rate</div><div class="kpi-delta up">↑ 2% vs last week</div></div>
+        <div class="kpi-card"><div class="kpi-icon">📋</div><div class="kpi-val">18</div><div class="kpi-label">Pending Leaves</div><div class="kpi-delta down">↑ 5 new today</div></div>
+        <div class="kpi-card"><div class="kpi-icon">💰</div><div class="kpi-val">₹42L</div><div class="kpi-label">Monthly Payroll</div><div class="kpi-delta neutral">→ Same as last month</div></div>
+        <div class="kpi-card"><div class="kpi-icon">📦</div><div class="kpi-val">312</div><div class="kpi-label">Total Assets</div><div class="kpi-delta up">↑ 8 assigned this week</div></div>
+        <div class="kpi-card"><div class="kpi-icon">🎫</div><div class="kpi-val">7</div><div class="kpi-label">Open Tickets</div><div class="kpi-delta down">3 SLA breached</div></div>
+        <div class="kpi-card"><div class="kpi-icon">🔧</div><div class="kpi-val">4</div><div class="kpi-label">Repair Tickets</div><div class="kpi-delta neutral">→ 1 critical</div></div>
+        <div class="kpi-card"><div class="kpi-icon">🚪</div><div class="kpi-val">2</div><div class="kpi-label">Active Offboarding</div><div class="kpi-delta yellow">⚠ Exit in 5 days</div></div>
+      </div>
+      <div class="chart-grid">
+        <div class="chart-box">
+          <div class="chart-title">Monthly Payroll (₹ Lakhs)</div>
+          <div class="bar-chart" id="bar-chart">
+            <div class="bar" style="--h:60%;height:60%"><span class="bar-label">Oct</span></div>
+            <div class="bar" style="--h:72%;height:72%"><span class="bar-label">Nov</span></div>
+            <div class="bar" style="--h:65%;height:65%"><span class="bar-label">Dec</span></div>
+            <div class="bar" style="--h:80%;height:80%"><span class="bar-label">Jan</span></div>
+            <div class="bar" style="--h:75%;height:75%"><span class="bar-label">Feb</span></div>
+            <div class="bar" style="background:linear-gradient(180deg,#F59E0B,#D97706);height:90%"><span class="bar-label">Mar</span></div>
+          </div>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title">Headcount by Department</div>
+          <div class="donut-container">
+            <div class="donut">
+              <svg class="donut-svg" width="100" height="100" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="16"/>
+                <circle cx="50" cy="50" r="40" fill="none" stroke="#3B82F6" stroke-width="16" stroke-dasharray="100 152" stroke-dashoffset="0"/>
+                <circle cx="50" cy="50" r="40" fill="none" stroke="#8B5CF6" stroke-width="16" stroke-dasharray="55 197" stroke-dashoffset="-100"/>
+                <circle cx="50" cy="50" r="40" fill="none" stroke="#F59E0B" stroke-width="16" stroke-dasharray="42 210" stroke-dashoffset="-155"/>
+                <circle cx="50" cy="50" r="40" fill="none" stroke="#10B981" stroke-width="16" stroke-dasharray="55 197" stroke-dashoffset="-197"/>
+              </svg>
+              <div class="donut-center"><div class="donut-num">247</div><div class="donut-desc">Total</div></div>
+            </div>
+            <div class="legend">
+              <div class="legend-item"><div class="legend-dot" style="background:#3B82F6"></div>Engineering (62)</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#8B5CF6"></div>Sales (55)</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#F59E0B"></div>HR (34)</div>
+              <div class="legend-item"><div class="legend-dot" style="background:#10B981"></div>Finance (48)</div>
+              <div class="legend-item"><div class="legend-dot" style="background:rgba(255,255,255,0.2)"></div>Others (48)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <div class="table-head"><div class="table-title">Recent Activity</div><button class="btn-ghost">View All</button></div>
+        <table>
+          <tr><th>Employee</th><th>Action</th><th>Module</th><th>Time</th><th>Status</th></tr>
+          <tr><td><div class="emp-chip"><div class="emp-avatar" style="background:linear-gradient(135deg,#3B82F6,#6366F1)">RK</div>Rahul Kumar</div></td><td>Applied for leave</td><td>Leave</td><td>10:42 AM</td><td><span class="badge badge-yellow">Pending</span></td></tr>
+          <tr><td><div class="emp-chip"><div class="emp-avatar" style="background:linear-gradient(135deg,#F59E0B,#EF4444)">PS</div>Priya Sharma</div></td><td>Clocked in (GPS)</td><td>Attendance</td><td>9:15 AM</td><td><span class="badge badge-green">Present</span></td></tr>
+          <tr><td><div class="emp-chip"><div class="emp-avatar" style="background:linear-gradient(135deg,#10B981,#3B82F6)">AM</div>Amir Mehta</div></td><td>Raised repair ticket</td><td>Repair</td><td>9:02 AM</td><td><span class="badge badge-blue">In Review</span></td></tr>
+          <tr><td><div class="emp-chip"><div class="emp-avatar" style="background:linear-gradient(135deg,#8B5CF6,#EC4899)">SJ</div>Sneha Joshi</div></td><td>Submitted goal progress</td><td>Performance</td><td>8:55 AM</td><td><span class="badge badge-green">Updated</span></td></tr>
+          <tr><td><div class="emp-chip"><div class="emp-avatar" style="background:linear-gradient(135deg,#6366F1,#8B5CF6)">VR</div>Vikas Rao</div></td><td>Exit interview completed</td><td>Offboarding</td><td>8:30 AM</td><td><span class="badge badge-purple">FnF Pending</span></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- EMPLOYEES -->
+    <div class="page" id="page-employees">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px;">
+        <div><div class="page-title">Employees</div><div class="page-sub">247 total employees across 5 departments</div></div>
+        <div style="display:flex;gap:8px;"><button class="btn-ghost">⬆ Import</button><button class="btn-primary">+ Add Employee</button></div>
+      </div>
+      <div style="display:flex;gap:10px;margin:16px 0;flex-wrap:wrap;">
+        <input class="input" style="max-width:260px" placeholder="🔍  Search employees..."/>
+        <select class="input" style="max-width:150px"><option>All Departments</option><option>Engineering</option><option>Sales</option><option>HR</option><option>Finance</option></select>
+        <select class="input" style="max-width:130px"><option>All Status</option><option>Active</option><option>On Leave</option><option>Terminated</option></select>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Employee</th><th>Department</th><th>Designation</th><th>Joined</th><th>Status</th><th>Actions</th></tr>
+          <tr><td><div class="emp-chip"><div class="emp-avatar" style="background:linear-gradient(135deg,#3B82F6,#6366F1)">RK</div><div><div style="font-weight:600">Rahul Kumar</div><div style="font-size:11px;color:var(--muted)">EMP-0042</div></div></div></td><td>Engineering</td><td>Sr. Engineer</td><td>12 Jan 2022</td><td><span class="badge badge-green">Active</span></td><td><button class="btn-ghost" style="padding:4px 10px;font-size:12px">View</button></td></tr>
+          <tr><td><div class="emp-chip"><div class="emp-avatar" style="background:linear-gradient(135deg,#F59E0B,#EF4444)">PS</div><div><div style="font-weight:600">Priya Sharma</div><div style="font-size:11px;color:var(--muted)">EMP-0038</div></div></div></td><td>HR</td><td>HR Manager</td><td>5 Mar 2021</td><td><span class="badge badge-green">Active</span></td><td><button class="btn-ghost" style="padding:4px 10px;font-size:12px">View</button></td></tr>
+          <tr><td><div class="emp-chip"><div class="emp-avatar" style="background:linear-gradient(135deg,#10B981,#3B82F6)">AM</div><div><div style="font-weight:600">Amir Mehta</div><div style="font-size:11px;color:var(--muted)">EMP-0055</div></div></div></td><td>Sales</td><td>Account Exec</td><td>8 Jun 2023</td><td><span class="badge badge-yellow">On Leave</span></td><td><button class="btn-ghost" style="padding:4px 10px;font-size:12px">View</button></td></tr>
+          <tr><td><div class="emp-chip"><div class="emp-avatar" style="background:linear-gradient(135deg,#8B5CF6,#EC4899)">SJ</div><div><div style="font-weight:600">Sneha Joshi</div><div style="font-size:11px;color:var(--muted)">EMP-0061</div></div></div></td><td>Finance</td><td>Finance Analyst</td><td>20 Sep 2022</td><td><span class="badge badge-green">Active</span></td><td><button class="btn-ghost" style="padding:4px 10px;font-size:12px">View</button></td></tr>
+          <tr><td><div class="emp-chip"><div class="emp-avatar" style="background:linear-gradient(135deg,#6366F1,#8B5CF6)">VR</div><div><div style="font-weight:600">Vikas Rao</div><div style="font-size:11px;color:var(--muted)">EMP-0029</div></div></div></td><td>Engineering</td><td>Tech Lead</td><td>3 Feb 2020</td><td><span class="badge badge-red">Offboarding</span></td><td><button class="btn-ghost" style="padding:4px 10px;font-size:12px">View</button></td></tr>
+          <tr><td><div class="emp-chip"><div class="emp-avatar" style="background:linear-gradient(135deg,#EF4444,#F59E0B)">NK</div><div><div style="font-weight:600">Neha Kapoor</div><div style="font-size:11px;color:var(--muted)">EMP-0071</div></div></div></td><td>Marketing</td><td>Brand Manager</td><td>14 Nov 2023</td><td><span class="badge badge-green">Active</span></td><td><button class="btn-ghost" style="padding:4px 10px;font-size:12px">View</button></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- ATTENDANCE -->
+    <div class="page" id="page-attendance">
+      <div class="page-title">Attendance</div>
+      <div class="page-sub">Today: Friday, 20 March 2026 · 89% present</div>
+      <div class="stat-row">
+        <div class="stat-mini"><div class="stat-mini-val" style="color:#34D399">220</div><div class="stat-mini-label">Present</div></div>
+        <div class="stat-mini"><div class="stat-mini-val" style="color:#F87171">18</div><div class="stat-mini-label">Absent</div></div>
+        <div class="stat-mini"><div class="stat-mini-val" style="color:#FBBF24">9</div><div class="stat-mini-label">On Leave</div></div>
+        <div class="stat-mini"><div class="stat-mini-val" style="color:#60A5FA">14</div><div class="stat-mini-label">WFH</div></div>
+        <div class="stat-mini"><div class="stat-mini-val">6</div><div class="stat-mini-label">Half Day</div></div>
+      </div>
+      <div class="table-wrap">
+        <div class="table-head"><div class="table-title">Today's Register</div><button class="btn-ghost">📥 Export</button></div>
+        <table>
+          <tr><th>Employee</th><th>Clock In</th><th>Clock Out</th><th>Method</th><th>Working Hrs</th><th>Status</th></tr>
+          <tr><td><div class="emp-chip"><div class="emp-avatar" style="background:linear-gradient(135deg,#3B82F6,#6366F1)">RK</div>Rahul Kumar</div></td><td>9:02 AM</td><td>—</td><td>📍 GPS</td><td>3h 40m</td><td><span class="badge badge-green">Present</span></td></tr>
+          <tr><td><div class="emp-chip"><div class="emp-avatar" style="background:linear-gradient(135deg,#F59E0B,#EF4444)">PS</div>Priya Sharma</div></td><td>8:55 AM</td><td>—</td><td>😊 Face</td><td>3h 47m</td><td><span class="badge badge-green">Present</span></td></tr>
+          <tr><td><div class="emp-chip"><div class="emp-avatar" style="background:linear-gradient(135deg,#10B981,#3B82F6)">AM</div>Amir Mehta</div></td><td>—</td><td>—</td><td>—</td><td>—</td><td><span class="badge badge-yellow">On Leave</span></td></tr>
+          <tr><td><div class="emp-chip"><div class="emp-avatar" style="background:linear-gradient(135deg,#8B5CF6,#EC4899)">SJ</div>Sneha Joshi</div></td><td>9:30 AM</td><td>—</td><td>📶 WiFi</td><td>3h 12m</td><td><span class="badge badge-blue">WFH</span></td></tr>
+          <tr><td><div class="emp-chip"><div class="emp-avatar" style="background:linear-gradient(135deg,#EF4444,#F59E0B)">NK</div>Neha Kapoor</div></td><td>10:15 AM</td><td>—</td><td>✍ Manual</td><td>2h 27m</td><td><span class="badge badge-yellow">Late</span></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- LEAVE -->
+    <div class="page" id="page-leave">
+      <div class="page-title">Leave Management</div>
+      <div class="page-sub">18 pending requests · 3 holidays this month</div>
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab(this,'leave-pending')">Pending (18)</button>
+        <button class="tab" onclick="switchTab(this,'leave-balances')">Balances</button>
+        <button class="tab" onclick="switchTab(this,'leave-types')">Types</button>
+      </div>
+      <div id="leave-pending">
+        <div class="table-wrap">
+          <table>
+            <tr><th>Employee</th><th>Leave Type</th><th>From</th><th>To</th><th>Days</th><th>Reason</th><th>Actions</th></tr>
+            <tr><td><div class="emp-chip"><div class="emp-avatar" style="background:linear-gradient(135deg,#3B82F6,#6366F1)">RK</div>Rahul Kumar</div></td><td>Earned Leave</td><td>25 Mar</td><td>28 Mar</td><td>4</td><td>Family vacation</td><td><button class="btn-primary" style="padding:4px 10px;font-size:11px;margin-right:4px" onclick="approveLeave(this)">Approve</button><button class="btn-ghost" style="padding:4px 10px;font-size:11px">Reject</button></td></tr>
+            <tr><td><div class="emp-chip"><div class="emp-avatar" style="background:linear-gradient(135deg,#EF4444,#F59E0B)">NK</div>Neha Kapoor</div></td><td>Sick Leave</td><td>21 Mar</td><td>21 Mar</td><td>1</td><td>Doctor's appointment</td><td><button class="btn-primary" style="padding:4px 10px;font-size:11px;margin-right:4px" onclick="approveLeave(this)">Approve</button><button class="btn-ghost" style="padding:4px 10px;font-size:11px">Reject</button></td></tr>
+          </table>
+        </div>
+      </div>
+      <div id="leave-balances" style="display:none">
+        <div class="table-wrap">
+          <table>
+            <tr><th>Employee</th><th>Earned Leave</th><th>Sick Leave</th><th>Casual Leave</th><th>Comp Off</th></tr>
+            <tr><td><div class="emp-chip"><div class="emp-avatar" style="background:linear-gradient(135deg,#3B82F6,#6366F1)">RK</div>Rahul Kumar</div></td><td>12 / 15</td><td>8 / 10</td><td>4 / 7</td><td>2 / 5</td></tr>
+            <tr><td><div class="emp-chip"><div class="emp-avatar" style="background:linear-gradient(135deg,#F59E0B,#EF4444)">PS</div>Priya Sharma</div></td><td>15 / 15</td><td>6 / 10</td><td>7 / 7</td><td>0 / 5</td></tr>
+            <tr><td><div class="emp-chip"><div class="emp-avatar" style="background:linear-gradient(135deg,#EF4444,#F59E0B)">NK</div>Neha Kapoor</div></td><td>9 / 15</td><td>9 / 10</td><td>5 / 7</td><td>1 / 5</td></tr>
+          </table>
+        </div>
+      </div>
+      <div id="leave-types" style="display:none">
+        <div class="table-wrap">
+          <table>
+            <tr><th>Type</th><th>Annual Quota</th><th>Carry Forward</th><th>Encashable</th><th>Paid</th></tr>
+            <tr><td>Earned Leave</td><td>15 days</td><td>✅ Yes (max 30)</td><td>✅ Yes</td><td>✅ Yes</td></tr>
+            <tr><td>Sick Leave</td><td>10 days</td><td>❌ No</td><td>❌ No</td><td>✅ Yes</td></tr>
+            <tr><td>Casual Leave</td><td>7 days</td><td>❌ No</td><td>❌ No</td><td>✅ Yes</td></tr>
+            <tr><td>Maternity Leave</td><td>182 days</td><td>N/A</td><td>❌ No</td><td>✅ Yes</td></tr>
+            <tr><td>Comp Off</td><td>5 days</td><td>✅ Yes (30 days)</td><td>❌ No</td><td>✅ Yes</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAYROLL -->
+    <div class="page" id="page-payroll">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div><div class="page-title">Payroll</div><div class="page-sub">March 2026 · ₹42,18,400 total</div></div>
+        <button class="btn-primary">▶ Run Payroll</button>
+      </div>
+      <div class="stat-row">
+        <div class="stat-mini"><div class="stat-mini-val" style="color:#34D399">₹42.2L</div><div class="stat-mini-label">Gross Payout</div></div>
+        <div class="stat-mini"><div class="stat-mini-val" style="color:#F87171">₹7.8L</div><div class="stat-mini-label">Total Deductions</div></div>
+        <div class="stat-mini"><div class="stat-mini-val">₹34.4L</div><div class="stat-mini-label">Net Payout</div></div>
+        <div class="stat-mini"><div class="stat-mini-val" style="color:#FBBF24">247</div><div class="stat-mini-label">Employees Processed</div></div>
+      </div>
+      <div class="table-wrap">
+        <div class="table-head"><div class="table-title">Payroll Runs</div></div>
+        <table>
+          <tr><th>Month</th><th>Employees</th><th>Gross</th><th>Net</th><th>Status</th><th>Actions</th></tr>
+          <tr><td>March 2026</td><td>247</td><td>₹42,18,400</td><td>₹34,42,000</td><td><span class="badge badge-yellow">Draft</span></td><td><button class="btn-ghost" style="padding:4px 10px;font-size:11px;margin-right:4px">View</button><button class="btn-primary" style="padding:4px 10px;font-size:11px">Approve</button></td></tr>
+          <tr><td>February 2026</td><td>245</td><td>₹41,80,000</td><td>₹34,12,000</td><td><span class="badge badge-green">Paid</span></td><td><button class="btn-ghost" style="padding:4px 10px;font-size:11px;margin-right:4px">View</button><button class="btn-ghost" style="padding:4px 10px;font-size:11px">📧 Email</button></td></tr>
+          <tr><td>January 2026</td><td>243</td><td>₹40,50,000</td><td>₹33,00,000</td><td><span class="badge badge-green">Paid</span></td><td><button class="btn-ghost" style="padding:4px 10px;font-size:11px">View</button></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- ASSETS -->
+    <div class="page" id="page-assets">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div><div class="page-title">Assets</div><div class="page-sub">312 total · 218 assigned · 82 available · 12 in repair</div></div>
+        <button class="btn-primary">+ Add Asset</button>
+      </div>
+      <div class="table-wrap">
+        <div class="table-head"><div class="table-title">Asset Inventory</div><button class="btn-ghost">📥 Export</button></div>
+        <table>
+          <tr><th>Asset</th><th>Category</th><th>Asset Tag</th><th>Assigned To</th><th>Status</th><th>Actions</th></tr>
+          <tr><td><div style="font-weight:600">MacBook Pro 14"</div><div style="font-size:11px;color:var(--muted)">Apple M3 Pro · 16GB</div></td><td>Laptop</td><td>AST-0142</td><td><div class="emp-chip"><div class="emp-avatar" style="background:linear-gradient(135deg,#3B82F6,#6366F1);width:22px;height:22px;font-size:9px">RK</div>Rahul Kumar</div></td><td><span class="badge badge-blue">Assigned</span></td><td><button class="btn-ghost" style="padding:4px 10px;font-size:11px">QR</button></td></tr>
+          <tr><td><div style="font-weight:600">Dell Monitor 27"</div><div style="font-size:11px;color:var(--muted)">4K UHD · USB-C</div></td><td>Monitor</td><td>AST-0198</td><td>—</td><td><span class="badge badge-green">Available</span></td><td><button class="btn-ghost" style="padding:4px 10px;font-size:11px">Assign</button></td></tr>
+          <tr><td><div style="font-weight:600">iPhone 15 Pro</div><div style="font-size:11px;color:var(--muted)">256GB · Space Black</div></td><td>Mobile</td><td>AST-0203</td><td><div class="emp-chip"><div class="emp-avatar" style="background:linear-gradient(135deg,#8B5CF6,#EC4899);width:22px;height:22px;font-size:9px">SJ</div>Sneha Joshi</div></td><td><span class="badge badge-blue">Assigned</span></td><td><button class="btn-ghost" style="padding:4px 10px;font-size:11px">QR</button></td></tr>
+          <tr><td><div style="font-weight:600">ThinkPad X1 Carbon</div><div style="font-size:11px;color:var(--muted)">Intel i7 · 16GB</div></td><td>Laptop</td><td>AST-0089</td><td>—</td><td><span class="badge badge-red">In Repair</span></td><td><button class="btn-ghost" style="padding:4px 10px;font-size:11px">View</button></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- RBAC -->
+    <div class="page" id="page-rbac">
+      <div class="page-title">Access Control</div>
+      <div class="page-sub">3-Layer RBAC — Permissions → Roles → Assignments + Per-user overrides</div>
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab(this,'rbac-matrix')">Permission Matrix</button>
+        <button class="tab" onclick="switchTab(this,'rbac-roles')">Roles (8)</button>
+        <button class="tab" onclick="switchTab(this,'rbac-reviews')">Access Reviews</button>
+      </div>
+      <div id="rbac-matrix">
+        <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;">
+          <span style="font-size:12px;color:var(--muted)">Filter by module:</span>
+          <button class="badge badge-blue" style="cursor:pointer">All</button>
+          <button class="badge badge-gray" style="cursor:pointer">employees</button>
+          <button class="badge badge-gray" style="cursor:pointer">attendance</button>
+          <button class="badge badge-gray" style="cursor:pointer">payroll</button>
+          <button class="badge badge-gray" style="cursor:pointer">rbac</button>
+        </div>
+        <div class="table-wrap" style="overflow-x:auto">
+          <table class="matrix-table">
+            <tr>
+              <th style="min-width:160px">User</th>
+              <th style="text-align:center">emp:read</th>
+              <th style="text-align:center">emp:create</th>
+              <th style="text-align:center">emp:delete</th>
+              <th style="text-align:center">att:read</th>
+              <th style="text-align:center">att:approve</th>
+              <th style="text-align:center">pay:read</th>
+              <th style="text-align:center">pay:run</th>
+              <th style="text-align:center">rbac:assign</th>
+            </tr>
+            <tr><td><div class="emp-chip"><div class="emp-avatar" style="background:linear-gradient(135deg,#3B82F6,#6366F1);width:24px;height:24px;font-size:10px">SA</div><div><div style="font-size:12px;font-weight:600">Super Admin</div><div style="font-size:10px;color:var(--muted)">2 roles</div></div></div></td><td><div class="perm-check perm-yes">✓</div></td><td><div class="perm-check perm-yes">✓</div></td><td><div class="perm-check perm-yes">✓</div></td><td><div class="perm-check perm-yes">✓</div></td><td><div class="perm-check perm-yes">✓</div></td><td><div class="perm-check perm-yes">✓</div></td><td><div class="perm-check perm-yes">✓</div></td><td><div class="perm-check perm-yes">✓</div></td></tr>
+            <tr><td><div class="emp-chip"><div class="emp-avatar" style="background:linear-gradient(135deg,#F59E0B,#EF4444);width:24px;height:24px;font-size:10px">PS</div><div><div style="font-size:12px;font-weight:600">Priya Sharma</div><div style="font-size:10px;color:var(--muted)">HR Manager role</div></div></div></td><td><div class="perm-check perm-yes">✓</div></td><td><div class="perm-check perm-yes">✓</div></td><td><div class="perm-check perm-no"></div></td><td><div class="perm-check perm-yes">✓</div></td><td><div class="perm-check perm-yes">✓</div></td><td><div class="perm-check perm-no"></div></td><td><div class="perm-check perm-no"></div></td><td><div class="perm-check perm-no"></div></td></tr>
+            <tr><td><div class="emp-chip"><div class="emp-avatar" style="background:linear-gradient(135deg,#3B82F6,#6366F1);width:24px;height:24px;font-size:10px">RK</div><div><div style="font-size:12px;font-weight:600">Rahul Kumar</div><div style="font-size:10px;color:var(--muted)">Employee role</div></div></div></td><td><div class="perm-check perm-yes">✓</div></td><td><div class="perm-check perm-no"></div></td><td><div class="perm-check perm-no"></div></td><td><div class="perm-check perm-yes">✓</div></td><td><div class="perm-check perm-no"></div></td><td><div class="perm-check perm-yes">✓</div></td><td><div class="perm-check perm-no"></div></td><td><div class="perm-check perm-no"></div></td></tr>
+            <tr><td><div class="emp-chip"><div class="emp-avatar" style="background:linear-gradient(135deg,#8B5CF6,#EC4899);width:24px;height:24px;font-size:10px">SJ</div><div><div style="font-size:12px;font-weight:600">Sneha Joshi</div><div style="font-size:10px;color:var(--muted)">Finance Manager</div></div></div></td><td><div class="perm-check perm-yes">✓</div></td><td><div class="perm-check perm-no"></div></td><td><div class="perm-check perm-no"></div></td><td><div class="perm-check perm-no"></div></td><td><div class="perm-check perm-no"></div></td><td><div class="perm-check perm-yes">✓</div></td><td><div class="perm-check perm-yes">✓</div></td><td><div class="perm-check perm-no"></div></td></tr>
+          </table>
+        </div>
+      </div>
+      <div id="rbac-roles" style="display:none">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:8px;">
+          <div class="glass" style="padding:16px;border-radius:12px"><div style="font-weight:600;margin-bottom:4px">Super Admin</div><div style="font-size:11px;color:var(--muted);margin-bottom:10px">Full system access</div><div style="display:flex;gap:6px;flex-wrap:wrap"><span class="badge badge-blue">23 perms</span><span class="badge badge-yellow">System</span></div><div style="margin-top:8px;font-size:11px;color:var(--dim)">2 users</div></div>
+          <div class="glass" style="padding:16px;border-radius:12px"><div style="font-weight:600;margin-bottom:4px">HR Manager</div><div style="font-size:11px;color:var(--muted);margin-bottom:10px">HR module full access</div><div style="display:flex;gap:6px;flex-wrap:wrap"><span class="badge badge-blue">15 perms</span><span class="badge badge-yellow">System</span></div><div style="margin-top:8px;font-size:11px;color:var(--dim)">4 users</div></div>
+          <div class="glass" style="padding:16px;border-radius:12px"><div style="font-weight:600;margin-bottom:4px">Finance Manager</div><div style="font-size:11px;color:var(--muted);margin-bottom:10px">Payroll + reports</div><div style="display:flex;gap:6px;flex-wrap:wrap"><span class="badge badge-blue">10 perms</span><span class="badge badge-yellow">System</span></div><div style="margin-top:8px;font-size:11px;color:var(--dim)">3 users</div></div>
+          <div class="glass" style="padding:16px;border-radius:12px"><div style="font-weight:600;margin-bottom:4px">Employee</div><div style="font-size:11px;color:var(--muted);margin-bottom:10px">Self-service only</div><div style="display:flex;gap:6px;flex-wrap:wrap"><span class="badge badge-blue">6 perms</span><span class="badge badge-yellow">System</span></div><div style="margin-top:8px;font-size:11px;color:var(--dim)">238 users</div></div>
+          <div class="glass" style="padding:16px;border-radius:12px;border-style:dashed;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;color:var(--muted)" onclick="alert('Role composer: select permissions by module → create custom role')"><span>+</span><span style="font-size:13px">Create Custom Role</span></div>
+        </div>
+      </div>
+      <div id="rbac-reviews" style="display:none">
+        <div class="glass" style="padding:20px;border-radius:14px;margin-top:8px">
+          <div style="font-weight:600;margin-bottom:4px">Q1 2026 Quarterly Access Review</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Initiated by Super Admin · Due 31 Mar 2026</div>
+          <div style="display:flex;gap:8px;margin-bottom:16px">
+            <span class="badge badge-blue">48 assignments</span>
+            <span class="badge badge-green">32 approved</span>
+            <span class="badge badge-yellow">12 pending</span>
+            <span class="badge badge-red">4 revoked</span>
+          </div>
+          <div class="progress"><div class="progress-fill" style="width:67%"></div></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px">32/48 decisions made (67%)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REPAIR -->
+    <div class="page" id="page-repair">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div><div class="page-title">Asset Repair</div><div class="page-sub">ITSM-style 10-stage repair pipeline · SLA tracking</div></div>
+        <button class="btn-primary">+ New Ticket</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:16px 0;">
+        <div class="stat-mini"><div class="stat-mini-val">2</div><div class="stat-mini-label">Submitted</div></div>
+        <div class="stat-mini"><div class="stat-mini-val" style="color:#FBBF24">1</div><div class="stat-mini-label">Under Review</div></div>
+        <div class="stat-mini"><div class="stat-mini-val" style="color:#60A5FA">1</div><div class="stat-mini-label">In Repair</div></div>
+        <div class="stat-mini"><div class="stat-mini-val" style="color:#34D399">3</div><div class="stat-mini-label">Repaired</div></div>
+        <div class="stat-mini"><div class="stat-mini-val" style="color:#F87171">1</div><div class="stat-mini-label">SLA Breached</div></div>
+      </div>
+      <div class="pipeline">
+        <div class="pipeline-col">
+          <div class="pipeline-header">Submitted <span class="pipeline-count">2</span></div>
+          <div class="ticket-card"><div class="ticket-title">ThinkPad X1 Carbon</div><div class="ticket-meta" style="color:#F87171">● CRITICAL · Hardware</div><div class="ticket-meta" style="margin-top:4px">Rahul Kumar · 2h ago</div></div>
+          <div class="ticket-card"><div class="ticket-title">Dell Monitor 27"</div><div class="ticket-meta" style="color:#FBBF24">● MEDIUM · Display issue</div><div class="ticket-meta" style="margin-top:4px">Sneha Joshi · 5h ago</div></div>
+        </div>
+        <div class="pipeline-col">
+          <div class="pipeline-header">Under Review <span class="pipeline-count">1</span></div>
+          <div class="ticket-card" style="border-color:rgba(251,191,36,0.3)"><div class="ticket-title">iPhone 15 Pro</div><div class="ticket-meta" style="color:#FBBF24">● HIGH · Cracked screen</div><div class="ticket-meta" style="margin-top:4px">Amir Mehta · 1d ago</div></div>
+        </div>
+        <div class="pipeline-col">
+          <div class="pipeline-header">In Repair <span class="pipeline-count">1</span></div>
+          <div class="ticket-card" style="border-color:rgba(96,165,250,0.3)"><div class="ticket-title">MacBook Air M2</div><div class="ticket-meta" style="color:#60A5FA">● HIGH · Keyboard</div><div class="ticket-meta" style="margin-top:4px">Vendor: TechFix · 2d ago</div><div style="margin-top:6px"><div class="progress"><div class="progress-fill" style="width:60%"></div></div></div></div>
+        </div>
+        <div class="pipeline-col">
+          <div class="pipeline-header">QC / Repaired <span class="pipeline-count">3</span></div>
+          <div class="ticket-card" style="border-color:rgba(52,211,153,0.3)"><div class="ticket-title">Cisco IP Phone</div><div class="ticket-meta" style="color:#34D399">✓ Repaired · Cost ₹2,400</div><div class="stars" style="font-size:11px;margin-top:4px">★★★★★</div></div>
+          <div class="ticket-card"><div class="ticket-title">Epson Printer</div><div class="ticket-meta" style="color:#34D399">✓ QC Passed</div></div>
+        </div>
+        <div class="pipeline-col">
+          <div class="pipeline-header">Closed <span class="pipeline-count">12</span></div>
+          <div style="font-size:11px;color:var(--dim);text-align:center;padding:20px 0">12 tickets closed this month<br><span style="color:var(--electric)">Avg CSAT: 4.6 ★</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PERFORMANCE -->
+    <div class="page" id="page-performance">
+      <div class="page-title">Performance Management</div>
+      <div class="page-sub">Active cycle: Q1 2026 Review · Ends 31 Mar 2026</div>
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab(this,'perf-goals')">Goals</button>
+        <button class="tab" onclick="switchTab(this,'perf-reviews')">Reviews</button>
+        <button class="tab" onclick="switchTab(this,'perf-feedback')">360° Feedback</button>
+        <button class="tab" onclick="switchTab(this,'perf-pip')">PIP</button>
+      </div>
+      <div id="perf-goals">
+        <div class="goal-card">
+          <div class="goal-header"><div><div class="goal-title">Increase sales pipeline by 40%</div><div style="font-size:11px;color:var(--muted);margin-top:2px">OKR · Sales · Due 31 Mar</div></div><div class="goal-pct">78%</div></div>
+          <div class="progress"><div class="progress-fill" style="width:78%"></div></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px">Current: ₹3.12Cr / Target: ₹4Cr</div>
+        </div>
+        <div class="goal-card">
+          <div class="goal-header"><div><div class="goal-title">Launch 3 new product features</div><div style="font-size:11px;color:var(--muted);margin-top:2px">SMART · Engineering · Due 28 Feb</div></div><div class="goal-pct" style="color:#34D399">100%</div></div>
+          <div class="progress"><div class="progress-fill" style="width:100%;background:linear-gradient(90deg,#34D399,#10B981)"></div></div>
+          <div style="font-size:11px;color:#34D399;margin-top:6px">✓ Completed on 25 Feb 2026</div>
+        </div>
+        <div class="goal-card">
+          <div class="goal-header"><div><div class="goal-title">Reduce employee attrition to &lt;8%</div><div style="font-size:11px;color:var(--muted);margin-top:2px">KPI · HR · Due 31 Dec 2026</div></div><div class="goal-pct" style="color:#FBBF24">45%</div></div>
+          <div class="progress"><div class="progress-fill" style="width:45%;background:linear-gradient(90deg,#FBBF24,#F59E0B)"></div></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px">Current attrition: 11.2% / Target: &lt;8%</div>
+        </div>
+      </div>
+      <div id="perf-reviews" style="display:none">
+        <div class="table-wrap">
+          <table>
+            <tr><th>Reviewee</th><th>Reviewer</th><th>Type</th><th>Rating</th><th>Status</th></tr>
+            <tr><td>Rahul Kumar</td><td>Priya Sharma</td><td>Manager</td><td><span class="stars">★★★★☆</span> 4.1</td><td><span class="badge badge-green">Submitted</span></td></tr>
+            <tr><td>Sneha Joshi</td><td>Super Admin</td><td>Manager</td><td><span class="stars">★★★★★</span> 4.8</td><td><span class="badge badge-green">Submitted</span></td></tr>
+            <tr><td>Neha Kapoor</td><td>Priya Sharma</td><td>Manager</td><td>—</td><td><span class="badge badge-yellow">Pending</span></td></tr>
+          </table>
+        </div>
+        <div style="margin-top:16px;padding:16px;background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.2);border-radius:12px">
+          <div style="font-size:13px;font-weight:600;margin-bottom:8px">💰 Bonus Calculator — Q1 2026</div>
+          <table style="width:100%"><tr><th style="font-size:11px;color:var(--muted);padding:6px 0;font-weight:600;border-bottom:1px solid var(--border)">Employee</th><th style="font-size:11px;color:var(--muted);padding:6px 0;font-weight:600;border-bottom:1px solid var(--border)">Rating</th><th style="font-size:11px;color:var(--muted);padding:6px 0;font-weight:600;border-bottom:1px solid var(--border)">Bonus %</th><th style="font-size:11px;color:var(--muted);padding:6px 0;font-weight:600;border-bottom:1px solid var(--border)">Bonus Amount</th></tr>
+          <tr><td style="font-size:13px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04)">Sneha Joshi</td><td style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04)"><span class="stars">★★★★★</span></td><td style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);color:#34D399">20%</td><td style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-weight:700;color:var(--gold)">₹28,000</td></tr>
+          <tr><td style="font-size:13px;padding:8px 0">Rahul Kumar</td><td style="padding:8px 0"><span class="stars">★★★★☆</span></td><td style="padding:8px 0;color:#60A5FA">15%</td><td style="padding:8px 0;font-weight:700;color:var(--gold)">₹18,750</td></tr></table>
+        </div>
+      </div>
+      <div id="perf-feedback" style="display:none">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
+          <div class="stat-mini" style="text-align:center"><div style="font-size:24px;margin-bottom:4px">👔</div><div class="stat-mini-val">4.3</div><div class="stat-mini-label">Manager</div></div>
+          <div class="stat-mini" style="text-align:center"><div style="font-size:24px;margin-bottom:4px">👥</div><div class="stat-mini-val">4.1</div><div class="stat-mini-label">Peers</div></div>
+          <div class="stat-mini" style="text-align:center"><div style="font-size:24px;margin-bottom:4px">📊</div><div class="stat-mini-val">3.9</div><div class="stat-mini-label">Direct Reports</div></div>
+          <div class="stat-mini" style="text-align:center"><div style="font-size:24px;margin-bottom:4px">🪞</div><div class="stat-mini-val">4.5</div><div class="stat-mini-label">Self</div></div>
+        </div>
+        <div class="glass" style="padding:16px;border-radius:12px;margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:12px;color:var(--muted)">👥 Peer · Anonymous</span><span class="stars">★★★★★</span></div><p style="font-size:13px;color:rgba(255,255,255,0.7);border-left:2px solid #34D399;padding-left:10px">💪 Excellent problem-solving skills and proactively helps teammates with blockers.</p></div>
+        <div class="glass" style="padding:16px;border-radius:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:12px;color:var(--muted)">👔 Manager · Priya Sharma</span><span class="stars">★★★★☆</span></div><p style="font-size:13px;color:rgba(255,255,255,0.7);border-left:2px solid #F59E0B;padding-left:10px">📈 Could improve on documentation and time estimation for complex tasks.</p></div>
+      </div>
+      <div id="perf-pip" style="display:none">
+        <div class="glass" style="padding:20px;border-radius:14px"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px"><div><div style="font-weight:600">Amir Mehta</div><div style="font-size:11px;color:var(--muted)">Sales · Account Executive</div></div><span class="badge badge-red">ACTIVE PIP</span></div><div style="font-size:12px;color:var(--muted);margin-bottom:12px">Duration: 1 Feb – 30 Apr 2026 · Manager: Priya Sharma</div><div style="font-size:12px;margin-bottom:8px"><strong style="color:var(--muted)">Objectives:</strong> Achieve 80% of monthly sales target for 3 consecutive months</div><div style="margin-top:12px"><div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:4px"><span>Check-in progress</span><span>2/6 completed</span></div><div class="progress"><div class="progress-fill" style="width:33%"></div></div></div></div>
+      </div>
+    </div>
+
+    <!-- HELPDESK -->
+    <div class="page" id="page-helpdesk">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div><div class="page-title">Helpdesk</div><div class="page-sub">IT · HR · Facilities support · Avg CSAT: 4.4★</div></div>
+        <button class="btn-primary">+ New Ticket</button>
+      </div>
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab(this,'hd-tickets')">All Tickets</button>
+        <button class="tab" onclick="switchTab(this,'hd-kb')">Knowledge Base</button>
+        <button class="tab" onclick="switchTab(this,'hd-analytics')">Analytics</button>
+      </div>
+      <div id="hd-tickets">
+        <div class="table-wrap">
+          <table>
+            <tr><th>Ticket</th><th>Type</th><th>Reporter</th><th>Assigned To</th><th>Priority</th><th>SLA</th><th>Status</th></tr>
+            <tr><td><div style="font-weight:600">VPN not working</div><div style="font-size:11px;color:var(--muted)">#HD-0142</div></td><td>💻 IT</td><td>Rahul Kumar</td><td>IT Support</td><td><span style="color:#F87171;font-size:12px">● HIGH</span></td><td><span style="color:#F87171;font-size:11px">⚠ BREACHED</span></td><td><span class="badge badge-blue">In Progress</span></td></tr>
+            <tr><td><div style="font-weight:600">Salary slip for Jan not received</div><div style="font-size:11px;color:var(--muted)">#HD-0143</div></td><td>👥 HR</td><td>Neha Kapoor</td><td>HR Team</td><td><span style="color:#FBBF24;font-size:12px">● MEDIUM</span></td><td><span style="color:#34D399;font-size:11px">✓ 18h left</span></td><td><span class="badge badge-yellow">Open</span></td></tr>
+            <tr><td><div style="font-weight:600">Office AC not working in block B</div><div style="font-size:11px;color:var(--muted)">#HD-0144</div></td><td>🏢 Facilities</td><td>Sneha Joshi</td><td>Facilities</td><td><span style="color:#FBBF24;font-size:12px">● MEDIUM</span></td><td><span style="color:#34D399;font-size:11px">✓ 2d left</span></td><td><span class="badge badge-yellow">Open</span></td></tr>
+            <tr><td><div style="font-weight:600">Need access to Jira project</div><div style="font-size:11px;color:var(--muted)">#HD-0139</div></td><td>💻 IT</td><td>Amir Mehta</td><td>IT Support</td><td><span style="color:#34D399;font-size:12px">● LOW</span></td><td><span style="color:var(--muted);font-size:11px">Closed</span></td><td><span class="badge badge-green">Resolved <span class="stars" style="font-size:10px">★★★★★</span></span></td></tr>
+          </table>
+        </div>
+      </div>
+      <div id="hd-kb" style="display:none">
+        <input class="input" style="margin-bottom:12px" placeholder="🔍  Search knowledge base..."/>
+        <div class="article-item" onclick="alert('Article: How to connect to office VPN\n\nStep 1: Download Cisco AnyConnect from Software Center\nStep 2: Enter server: vpn.acmecorp.com\nStep 3: Use your LDAP credentials\nStep 4: Contact IT if 2FA code is not received')">
+          <div class="article-title">How to connect to office VPN</div>
+          <div class="article-meta"><span>💻 IT</span><span>👁 342 views</span><span>👍 28 helpful</span></div>
+        </div>
+        <div class="article-item" onclick="alert('Article: Leave policy guide\n\nEarned Leave: 15 days/year, can carry forward up to 30 days\nSick Leave: 10 days/year, no carry forward\nCasual Leave: 7 days/year, no carry forward\n\nApply at least 3 days in advance for planned leaves.')">
+          <div class="article-title">Leave policy complete guide</div>
+          <div class="article-meta"><span>👥 HR</span><span>👁 512 views</span><span>👍 47 helpful</span></div>
+        </div>
+        <div class="article-item" onclick="alert('Article: How to request a new laptop\n\n1. Submit asset request via Assets module\n2. Manager approval required\n3. IT team will configure and assign within 3 business days\n4. Sign asset acknowledgement form')">
+          <div class="article-title">Requesting new equipment / laptop</div>
+          <div class="article-meta"><span>💻 IT</span><span>👁 189 views</span><span>👍 22 helpful</span></div>
+        </div>
+        <div class="article-item" onclick="alert('Article: Payroll FAQ\n\nQ: When is salary credited?\nA: Last working day of the month\n\nQ: How to get payslip?\nA: Login → Payroll → My Payslips\n\nQ: For salary disputes, contact payroll@acmecorp.com')">
+          <div class="article-title">Payroll FAQ — salary, deductions & payslips</div>
+          <div class="article-meta"><span>👥 HR</span><span>👁 678 views</span><span>👍 61 helpful</span></div>
+        </div>
+      </div>
+      <div id="hd-analytics" style="display:none">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
+          <div class="stat-mini"><div class="stat-mini-val">38</div><div class="stat-mini-label">Total Tickets</div></div>
+          <div class="stat-mini"><div class="stat-mini-val" style="color:#34D399">29</div><div class="stat-mini-label">Resolved</div></div>
+          <div class="stat-mini"><div class="stat-mini-val" style="color:#F87171">3</div><div class="stat-mini-label">SLA Breached</div></div>
+          <div class="stat-mini"><div class="stat-mini-val" style="color:var(--gold)">4.4★</div><div class="stat-mini-label">Avg CSAT</div></div>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title">Tickets by Type</div>
+          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+            <div style="flex:1">
+              <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>💻 IT</span><span>18</span></div><div class="progress" style="margin-bottom:10px"><div class="progress-fill" style="width:47%;background:linear-gradient(90deg,#3B82F6,#6366F1)"></div></div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>👥 HR</span><span>12</span></div><div class="progress" style="margin-bottom:10px"><div class="progress-fill" style="width:32%;background:linear-gradient(90deg,#8B5CF6,#EC4899)"></div></div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>🏢 Facilities</span><span>5</span></div><div class="progress" style="margin-bottom:10px"><div class="progress-fill" style="width:13%;background:linear-gradient(90deg,#10B981,#3B82F6)"></div></div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>💰 Finance</span><span>3</span></div><div class="progress"><div class="progress-fill" style="width:8%;background:linear-gradient(90deg,#F59E0B,#EF4444)"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OFFBOARDING -->
+    <div class="page" id="page-offboarding">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div><div class="page-title">Offboarding</div><div class="page-sub">2 active cases · Full exit workflow with auto permission revocation</div></div>
+        <button class="btn-primary">+ Initiate Exit</button>
+      </div>
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab(this,'ob-vikas')">Vikas Rao — Tech Lead</button>
+        <button class="tab" onclick="switchTab(this,'ob-list')">All Cases</button>
+      </div>
+      <div id="ob-vikas">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <div><div style="font-weight:600">Vikas Rao</div><div style="font-size:11px;color:var(--muted)">Engineering · Tech Lead · Resignation</div></div>
+              <span class="badge badge-yellow">FnF Pending</span>
+            </div>
+            <div style="margin-bottom:10px">
+              <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:4px"><span>Checklist progress</span><span>8/10 tasks</span></div>
+              <div class="progress"><div class="progress-fill" style="width:80%"></div></div>
+            </div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Exit Date: 25 Mar 2026 (5 days remaining)</div>
+            <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--muted)">CHECKLIST</div>
+            <div id="ob-checklist">
+              <div class="checklist-item"><div class="check-circle done" onclick="toggleCheck(this)"></div><div><div style="font-size:13px;text-decoration:line-through;color:var(--muted)">Submit resignation letter</div><div style="font-size:10px;color:var(--dim)">HR · Completed 15 Mar</div></div></div>
+              <div class="checklist-item"><div class="check-circle done" onclick="toggleCheck(this)"></div><div><div style="font-size:13px;text-decoration:line-through;color:var(--muted)">Knowledge transfer documentation</div><div style="font-size:10px;color:var(--dim)">Manager · Completed 18 Mar</div></div></div>
+              <div class="checklist-item"><div class="check-circle done" onclick="toggleCheck(this)"></div><div><div style="font-size:13px;text-decoration:line-through;color:var(--muted)">Return laptop & accessories</div><div style="font-size:10px;color:var(--dim)">IT · Completed 19 Mar</div></div></div>
+              <div class="checklist-item"><div class="check-circle done" onclick="toggleCheck(this)"></div><div><div style="font-size:13px;text-decoration:line-through;color:var(--muted)">Remove personal data from devices</div><div style="font-size:10px;color:var(--dim)">IT · Completed 19 Mar</div></div></div>
+              <div class="checklist-item"><div class="check-circle" onclick="toggleCheck(this)"></div><div><div style="font-size:13px">Return access card / key fob</div><div style="font-size:10px;color:var(--dim)">Administration · Pending</div></div></div>
+              <div class="checklist-item"><div class="check-circle" onclick="toggleCheck(this)"></div><div><div style="font-size:13px">NOC from Finance</div><div style="font-size:10px;color:var(--dim)">Finance · Pending</div></div></div>
+            </div>
+          </div>
+          <div>
+            <div style="margin-bottom:16px">
+              <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--muted)">DEPARTMENT CLEARANCES</div>
+              <div class="glass" style="padding:12px;border-radius:10px">
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px"><span>IT Department</span><span style="color:#34D399;font-weight:600">✓ Cleared</span></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px"><span>Manager</span><span style="color:#34D399;font-weight:600">✓ Cleared</span></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px"><span>HR</span><span style="color:#34D399;font-weight:600">✓ Cleared</span></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px"><span>Finance</span><span><button class="btn-ghost" style="padding:3px 8px;font-size:11px" onclick="this.closest('div').innerHTML='<span style=color:#34D399;font-weight:600>✓ Cleared</span>'">Sign Off</button></span></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:12px"><span>Administration</span><span><button class="btn-ghost" style="padding:3px 8px;font-size:11px" onclick="this.closest('div').innerHTML='<span style=color:#34D399;font-weight:600>✓ Cleared</span>'">Sign Off</button></span></div>
+              </div>
+            </div>
+            <div style="margin-bottom:16px">
+              <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--muted)">FULL & FINAL SETTLEMENT</div>
+              <div class="glass" style="padding:12px;border-radius:10px">
+                <div class="fnf-row"><span style="color:var(--muted)">Monthly Salary</span><span>₹1,25,000</span></div>
+                <div class="fnf-row"><span style="color:var(--muted)">Days Worked (20/30)</span><span>₹83,333</span></div>
+                <div class="fnf-row"><span style="color:var(--muted)">Leave Encashment (8 days)</span><span>₹33,333</span></div>
+                <div class="fnf-row"><span style="color:var(--muted)">Gratuity (6 years)</span><span>₹72,115</span></div>
+                <div class="fnf-total"><span>Total Payable</span><span style="color:var(--gold)">₹1,88,781</span></div>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--muted)">EXIT INTERVIEW</div>
+              <div class="glass" style="padding:12px;border-radius:10px;font-size:12px">
+                <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--muted)">NPS Score</span><span style="font-weight:700">8/10</span></div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:var(--muted)">Reason</span><span>Better opportunity</span></div>
+                <div style="color:rgba(255,255,255,0.6);font-style:italic">"Great team culture and learning opportunities. Leaving for a senior role."</div>
+              </div>
+            </div>
+            <button class="btn-primary" style="width:100%;margin-top:12px;padding:10px" onclick="completeOffboarding()">✓ Complete Offboarding &amp; Revoke Access</button>
+          </div>
+        </div>
+      </div>
+      <div id="ob-list" style="display:none">
+        <div class="table-wrap">
+          <table>
+            <tr><th>Employee</th><th>Exit Type</th><th>Exit Date</th><th>Progress</th><th>Status</th></tr>
+            <tr><td><div class="emp-chip"><div class="emp-avatar" style="background:linear-gradient(135deg,#6366F1,#8B5CF6);width:24px;height:24px;font-size:10px">VR</div>Vikas Rao</div></td><td>Resignation</td><td>25 Mar 2026</td><td><div style="display:flex;align-items:center;gap:8px"><div class="progress" style="width:80px"><div class="progress-fill" style="width:80%"></div></div><span style="font-size:11px;color:var(--muted)">8/10</span></div></td><td><span class="badge badge-yellow">FnF Pending</span></td></tr>
+            <tr><td><div class="emp-chip"><div class="emp-avatar" style="background:linear-gradient(135deg,#EF4444,#F59E0B);width:24px;height:24px;font-size:10px">MK</div>Mohan Kumar</div></td><td>Retirement</td><td>31 Mar 2026</td><td><div style="display:flex;align-items:center;gap:8px"><div class="progress" style="width:80px"><div class="progress-fill" style="width:40%"></div></div><span style="font-size:11px;color:var(--muted)">4/10</span></div></td><td><span class="badge badge-blue">In Progress</span></td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<script>
+function doLogin(){
+  const e=document.getElementById('email-input').value;
+  const p=document.getElementById('pass-input').value;
+  if(e==='admin@acmecorp.com'&&p==='Admin@123'){
+    document.getElementById('login-screen').style.display='none';
+  } else {
+    document.getElementById('login-err').style.display='block';
+  }
+}
+document.getElementById('pass-input').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
+
+function logout(){document.getElementById('login-screen').style.display='flex';}
+
+const pageNames={dashboard:'Dashboard',employees:'Employees',attendance:'Attendance',leave:'Leave Management',payroll:'Payroll',assets:'Assets',rbac:'Access Control',repair:'Asset Repair',performance:'Performance',helpdesk:'Helpdesk',offboarding:'Offboarding'};
+
+function goto(page,navEl){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  if(navEl) navEl.classList.add('active');
+  document.getElementById('breadcrumb').innerHTML='/ <span>'+pageNames[page]+'</span>';
+}
+
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('collapsed');
+}
+
+function switchTab(btn,sectionId){
+  const parent=btn.closest('.tabs');
+  parent.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  // Hide all siblings of target section
+  const target=document.getElementById(sectionId);
+  if(!target)return;
+  const siblings=target.parentElement.querySelectorAll(':scope > div[id]');
+  siblings.forEach(s=>s.style.display='none');
+  target.style.display='block';
+}
+
+function approveLeave(btn){
+  const row=btn.closest('tr');
+  row.querySelector('td:last-child').innerHTML='<span class="badge badge-green">✓ Approved</span>';
+}
+
+function toggleCheck(el){
+  el.classList.toggle('done');
+  const taskText=el.nextElementSibling.querySelector('div:first-child');
+  if(el.classList.contains('done')){
+    taskText.style.textDecoration='line-through';
+    taskText.style.color='var(--muted)';
+  } else {
+    taskText.style.textDecoration='';
+    taskText.style.color='';
+  }
+  // update progress
+  const done=document.querySelectorAll('#ob-checklist .check-circle.done').length;
+  const total=document.querySelectorAll('#ob-checklist .check-circle').length;
+  document.querySelector('#ob-vikas .progress-fill').style.width=Math.round((done/total)*100)+'%';
+  document.querySelector('#ob-vikas .progress').nextElementSibling || null;
+}
+
+function completeOffboarding(){
+  if(confirm('⚠️ This will:\n• Mark offboarding as COMPLETED\n• Deactivate user account\n• Revoke ALL role assignments\n• Flush permission cache\n\nProceed?')){
+    alert('✅ Offboarding completed!\n\nAll access has been revoked for Vikas Rao.\n• User account: DEACTIVATED\n• Roles revoked: 2\n• Permission cache: CLEARED\n• Employee status: TERMINATED');
+  }
+}
+
+// Allow Enter on login
+document.getElementById('email-input').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
+</script>
+</body>
+</html>
