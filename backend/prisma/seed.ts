@@ -89,13 +89,13 @@ async function main() {
 
   // Payroll components
   const components = [
-    { code: 'BASIC', name: 'Basic Salary', type: 'EARNING' as const, calculationType: 'PERCENTAGE' as const, calculationBase: 'CTC', value: 40, sortOrder: 1 },
-    { code: 'HRA', name: 'House Rent Allowance', type: 'EARNING' as const, calculationType: 'PERCENTAGE' as const, calculationBase: 'BASIC', value: 50, sortOrder: 2 },
-    { code: 'DA', name: 'Dearness Allowance', type: 'EARNING' as const, calculationType: 'PERCENTAGE' as const, calculationBase: 'BASIC', value: 10, sortOrder: 3 },
-    { code: 'SA', name: 'Special Allowance', type: 'EARNING' as const, calculationType: 'FORMULA' as const, sortOrder: 4 },
-    { code: 'PF_EMPLOYEE', name: 'PF (Employee)', type: 'STATUTORY' as const, calculationType: 'PERCENTAGE' as const, calculationBase: 'BASIC', value: 12, sortOrder: 5 },
-    { code: 'ESI_EMPLOYEE', name: 'ESI (Employee)', type: 'STATUTORY' as const, calculationType: 'PERCENTAGE' as const, calculationBase: 'GROSS', value: 0.75, sortOrder: 6 },
-    { code: 'PT', name: 'Professional Tax', type: 'STATUTORY' as const, calculationType: 'FIXED' as const, value: 200, sortOrder: 7 },
+    { code: 'BASIC', name: 'Basic Salary', componentType: 'EARNING' as const, calculationType: 'PERCENTAGE' as const, calculationBase: 'CTC', value: 40, sortOrder: 1 },
+    { code: 'HRA', name: 'House Rent Allowance', componentType: 'EARNING' as const, calculationType: 'PERCENTAGE' as const, calculationBase: 'BASIC', value: 50, sortOrder: 2 },
+    { code: 'DA', name: 'Dearness Allowance', componentType: 'EARNING' as const, calculationType: 'PERCENTAGE' as const, calculationBase: 'BASIC', value: 10, sortOrder: 3 },
+    { code: 'SA', name: 'Special Allowance', componentType: 'EARNING' as const, calculationType: 'FORMULA' as const, sortOrder: 4 },
+    { code: 'PF_EMPLOYEE', name: 'PF (Employee)', componentType: 'STATUTORY' as const, calculationType: 'PERCENTAGE' as const, calculationBase: 'BASIC', value: 12, sortOrder: 5 },
+    { code: 'ESI_EMPLOYEE', name: 'ESI (Employee)', componentType: 'STATUTORY' as const, calculationType: 'PERCENTAGE' as const, calculationBase: 'GROSS', value: 0.75, sortOrder: 6 },
+    { code: 'PT', name: 'Professional Tax', componentType: 'STATUTORY' as const, calculationType: 'FIXED' as const, value: 200, sortOrder: 7 },
   ];
 
   for (const c of components) {
