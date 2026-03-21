@@ -12,9 +12,9 @@ async function main() {
     update: {},
     create: {
       id: 'org-001',
-      name: 'Acme Corp',
-      legalName: 'Acme Corporation Pvt Ltd',
-      email: 'hr@acmecorp.com',
+      name: 'Wheeley',
+      legalName: 'Wheeley Technologies Pvt Ltd',
+      email: 'hr@wheeley.in',
       phone: '+91-9999999999',
       city: 'Bengaluru',
       state: 'Karnataka',
@@ -44,7 +44,7 @@ async function main() {
     create: {
       organizationId: org.id, employeeCode: 'EMP0001',
       firstName: 'Super', lastName: 'Admin',
-      workEmail: 'admin@acmecorp.com',
+      workEmail: 'admin@wheeley.in',
       departmentId: hr.id, designationId: hm.id,
       joiningDate: new Date('2020-01-01'), status: 'ACTIVE', employmentType: 'FULL_TIME',
     },
@@ -52,9 +52,9 @@ async function main() {
 
   const passwordHash = await bcrypt.hash('Admin@123', 12);
   await prisma.user.upsert({
-    where: { email: 'admin@acmecorp.com' },
+    where: { email: 'admin@wheeley.in' },
     update: {},
-    create: { organizationId: org.id, employeeId: superAdmin.id, email: 'admin@acmecorp.com', passwordHash, role: 'SUPER_ADMIN' },
+    create: { organizationId: org.id, employeeId: superAdmin.id, email: 'admin@wheeley.in', passwordHash, role: 'SUPER_ADMIN' },
   });
 
   // Leave types
@@ -112,6 +112,45 @@ async function main() {
     prisma.assetCategory.upsert({ where: { id: 'cat-furniture' }, update: {}, create: { id: 'cat-furniture', name: 'Furniture' } }),
     prisma.assetCategory.upsert({ where: { id: 'cat-vehicle' }, update: {}, create: { id: 'cat-vehicle', name: 'Vehicles' } }),
   ]);
+
+
+  // HR user
+  const hrEmployee = await prisma.employee.upsert({
+    where: { employeeCode: 'EMP0002' },
+    update: {},
+    create: {
+      organizationId: org.id, employeeCode: 'EMP0002',
+      firstName: 'Priya', lastName: 'Sharma',
+      workEmail: 'hr@wheeley.in',
+      departmentId: hr.id, designationId: hm.id,
+      joiningDate: new Date('2021-03-15'), status: 'ACTIVE', employmentType: 'FULL_TIME',
+    },
+  });
+  const hrPasswordHash = await bcrypt.hash('Hr@123456', 12);
+  await prisma.user.upsert({
+    where: { email: 'hr@wheeley.in' },
+    update: {},
+    create: { organizationId: org.id, employeeId: hrEmployee.id, email: 'hr@wheeley.in', passwordHash: hrPasswordHash, role: 'HR_ADMIN' },
+  });
+
+  // Employee user
+  const empEmployee = await prisma.employee.upsert({
+    where: { employeeCode: 'EMP0003' },
+    update: {},
+    create: {
+      organizationId: org.id, employeeCode: 'EMP0003',
+      firstName: 'Rahul', lastName: 'Verma',
+      workEmail: 'rahul@wheeley.in',
+      departmentId: eng.id, designationId: swe.id,
+      joiningDate: new Date('2022-06-01'), status: 'ACTIVE', employmentType: 'FULL_TIME',
+    },
+  });
+  const empPasswordHash = await bcrypt.hash('Emp@123456', 12);
+  await prisma.user.upsert({
+    where: { email: 'rahul@wheeley.in' },
+    update: {},
+    create: { organizationId: org.id, employeeId: empEmployee.id, email: 'rahul@wheeley.in', passwordHash: empPasswordHash, role: 'EMPLOYEE' },
+  });
 
   console.log('✅ Seed complete');
 }

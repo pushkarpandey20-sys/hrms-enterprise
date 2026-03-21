@@ -87,8 +87,8 @@ export default function Sidebar() {
               exit={{ opacity: 0, x: -10 }}
               className="ml-3 overflow-hidden"
             >
-              <p className="font-display font-bold text-foreground text-lg leading-tight">HRMS</p>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Enterprise</p>
+              <p className="font-display font-bold text-foreground text-lg leading-tight">Wheeley</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest">HRMS</p>
             </motion.div>
           )}
         </AnimatePresence>

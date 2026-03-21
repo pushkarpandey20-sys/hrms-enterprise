@@ -101,7 +101,7 @@ export default function LoginPage() {
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-electric to-indigo-600 flex items-center justify-center shadow-glow">
               <Building2 className="w-5 h-5 text-white" />
             </div>
-            <h1 className="font-display text-xl font-bold">HRMS Enterprise</h1>
+            <h1 className="font-display text-xl font-bold">Wheeley HRMS</h1>
           </div>
 
           <div className="mb-8">

@@ -10,9 +10,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: 'HRMS Enterprise',
-        short_name: 'HRMS',
-        description: 'Enterprise HR Management System',
+        name: 'Wheeley HRMS',
+        short_name: 'Wheeley',
+        description: 'Wheeley HR Management System',
         theme_color: '#0A0F1E',
         background_color: '#0A0F1E',
         display: 'standalone',
@@ -52,7 +52,7 @@ export default defineConfig({
     alias: { '@': path.resolve(__dirname, './src') },
   },
   server: {
-    port: 3000,
+    port: parseInt(process.env.PORT || '3000'),
     proxy: {
       '/api': {
         target: process.env.VITE_API_BASE_URL || 'http://localhost:5000',
