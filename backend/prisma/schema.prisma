@@ -156,6 +156,7 @@ model Employee {
   managedDepts     Department[]    @relation("DeptManager")
 
   user             User?
+  offboardingCase  OffboardingCase?
   emergencyContacts EmergencyContact[]
   documents        EmployeeDocument[]
   attendances      Attendance[]
