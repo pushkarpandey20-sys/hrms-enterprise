@@ -11,7 +11,7 @@ export const createCategory = async (req: Request, res: Response, next: NextFunc
 
 export const listCategories = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const cats = await svc.listCategories(req.user!.organizationId, req.query.type as any);
+    const cats = await svc.listCategories(req.user!.organizationId, req.query.categoryType as any);
     res.json({ success: true, data: cats });
   } catch (e) { next(e); }
 };
@@ -25,9 +25,9 @@ export const createTicket = async (req: Request, res: Response, next: NextFuncti
 
 export const listTickets = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { status, priority, type, assignedToId, page, pageSize } = req.query as any;
+    const { status, priority, ticketType, assignedToId, page, pageSize } = req.query as any;
     const result = await svc.listTickets(req.user!.organizationId, {
-      status, priority, type, assignedToId,
+      status, priority, ticketType, assignedToId,
       page: page ? +page : 1,
       pageSize: pageSize ? +pageSize : 20,
     });
@@ -87,8 +87,8 @@ export const createArticle = async (req: Request, res: Response, next: NextFunct
 
 export const searchArticles = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { q, category } = req.query as any;
-    const articles = await svc.searchArticles(req.user!.organizationId, q, category);
+    const { q, articleType } = req.query as any;
+    const articles = await svc.searchArticles(req.user!.organizationId, q, articleType);
     res.json({ success: true, data: articles });
   } catch (e) { next(e); }
 };

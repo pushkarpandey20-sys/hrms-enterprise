@@ -65,15 +65,15 @@ export class PayrollService {
         const dailyRate = amount / daysInMonth;
         amount = amount - (dailyRate * lopDays);
 
-        if (comp.type === 'EARNING') {
+        if (comp.componentType === 'EARNING') {
           earningsBreakdown[comp.name] = Math.round(amount);
           grossEarnings += amount;
-        } else if (comp.type === 'DEDUCTION') {
+        } else if (comp.componentType === 'DEDUCTION') {
           deductionsBreakdown[comp.name] = Math.round(amount);
           totalDeductionsEmp += amount;
           if (comp.code === 'PF_EMPLOYEE') pfEmployee = amount;
           if (comp.code === 'ESI_EMPLOYEE') esiEmployee = amount;
-        } else if (comp.type === 'STATUTORY') {
+        } else if (comp.componentType === 'STATUTORY') {
           deductionsBreakdown[comp.name] = Math.round(amount);
           totalDeductionsEmp += amount;
         }

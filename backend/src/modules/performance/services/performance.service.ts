@@ -38,7 +38,7 @@ export const updateCycleStatus = async (cycleId: string, orgId: string, status: 
 export const createGoal = async (data: {
   cycleId: string; employeeId: string; orgId: string;
   title: string; description?: string;
-  type: GoalType; category: GoalCategory;
+  goalType: GoalType; category: GoalCategory;
   targetValue?: number; weightage?: number;
   dueDate?: Date; kpiMetric?: string;
 }) => {
@@ -54,7 +54,7 @@ export const createGoal = async (data: {
       employeeId: data.employeeId,
       title: data.title,
       description: data.description,
-      type: data.type,
+      goalType: data.goalType,
       category: data.category,
       targetValue: data.targetValue,
       currentValue: 0,

@@ -2,7 +2,7 @@ import { prisma } from '../../../config/database';
 import { NotificationType } from '@prisma/client';
 
 export class NotificationService {
-  async create(data: { userId: string; title: string; message: string; type: NotificationType; referenceId?: string; referenceType?: string }) {
+  async create(data: { userId: string; title: string; message: string; notificationType: NotificationType; referenceId?: string; referenceType?: string }) {
     const notif = await prisma.notification.create({ data });
     // Emit socket event (handled in socketServer)
     const { emitToUser } = await import('../../../sockets/socketServer').catch(() => ({ emitToUser: null }));

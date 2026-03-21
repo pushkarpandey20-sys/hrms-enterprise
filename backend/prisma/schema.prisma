@@ -420,7 +420,7 @@ model Holiday {
   organizationId String
   name           String
   date           DateTime
-  type           HolidayType @default(NATIONAL)
+  holidayType    HolidayType @default(NATIONAL)
   isOptional     Boolean     @default(false)
   description    String?
   createdAt      DateTime    @default(now())
@@ -436,7 +436,7 @@ model PayrollComponent {
   organizationId String
   name           String
   code           String
-  type           ComponentType   // EARNING | DEDUCTION | STATUTORY
+  componentType  ComponentType   // EARNING | DEDUCTION | STATUTORY
   calculationType CalcType       // FIXED | PERCENTAGE | FORMULA
   calculationBase String?        // e.g. "BASIC" for percentage
   value          Float?          // fixed amount or percentage
@@ -644,39 +644,39 @@ model AssetAssignment {
 }
 
 model AssetMaintenance {
-  id           String   @id @default(uuid())
-  assetId      String
-  type         String
-  scheduledAt  DateTime
-  completedAt  DateTime?
-  cost         Float?
-  vendor       String?
-  notes        String?
-  createdAt    DateTime @default(now())
+  id             String   @id @default(uuid())
+  assetId        String
+  maintenanceType String
+  scheduledAt    DateTime
+  completedAt    DateTime?
+  cost           Float?
+  vendor         String?
+  notes          String?
+  createdAt      DateTime @default(now())
 
-  asset        Asset @relation(fields: [assetId], references: [id])
+  asset          Asset @relation(fields: [assetId], references: [id])
 }
 
 // ─────────────────────────────────────────────
 // DOCUMENTS
 // ─────────────────────────────────────────────
 model EmployeeDocument {
-  id           String       @id @default(uuid())
-  employeeId   String
-  name         String
-  type         DocumentType
-  fileUrl      String
-  fileName     String
-  fileSize     Int?
-  expiryDate   DateTime?
-  isVerified   Boolean      @default(false)
-  verifiedById String?
-  verifiedAt   DateTime?
-  notes        String?
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  id            String       @id @default(uuid())
+  employeeId    String
+  name          String
+  documentType  DocumentType
+  fileUrl       String
+  fileName      String
+  fileSize      Int?
+  expiryDate    DateTime?
+  isVerified    Boolean      @default(false)
+  verifiedById  String?
+  verifiedAt    DateTime?
+  notes         String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
-  employee     Employee @relation(fields: [employeeId], references: [id])
+  employee      Employee @relation(fields: [employeeId], references: [id])
 }
 
 // ─────────────────────────────────────────────
@@ -701,18 +701,18 @@ model Announcement {
 }
 
 model Notification {
-  id          String             @id @default(uuid())
-  userId      String
-  title       String
-  message     String
-  type        NotificationType
-  referenceId String?
-  referenceType String?
-  isRead      Boolean            @default(false)
-  readAt      DateTime?
-  createdAt   DateTime           @default(now())
+  id              String             @id @default(uuid())
+  userId          String
+  title           String
+  message         String
+  notificationType NotificationType
+  referenceId     String?
+  referenceType   String?
+  isRead          Boolean            @default(false)
+  readAt          DateTime?
+  createdAt       DateTime           @default(now())
 
-  user        User @relation(fields: [userId], references: [id])
+  user            User @relation(fields: [userId], references: [id])
 
   @@index([userId, isRead])
 }
@@ -1233,7 +1233,7 @@ model Goal {
   title          String
   description    String?
   category       GoalCategory @default(INDIVIDUAL)
-  type           GoalType     @default(OKR)
+  goalType       GoalType     @default(OKR)
   weight         Float      @default(1)
   targetValue    Float?
   actualValue    Float?
@@ -1373,7 +1373,7 @@ model HelpdeskTicket {
   description     String
   priority        TicketPriority   @default(MEDIUM)
   status          TicketStatus     @default(OPEN)
-  type            TicketType       @default(IT)
+  ticketType      TicketType       @default(IT)
   channel         TicketChannel    @default(WEB)
 
   // SLA
@@ -1404,7 +1404,7 @@ model HelpdeskCategory {
   id             String   @id @default(uuid())
   organizationId String
   name           String
-  type           TicketType
+  categoryType   TicketType
   slaHours       Int      @default(8)
   teamId         String?
   isActive       Boolean  @default(true)
@@ -1450,7 +1450,7 @@ model KnowledgeArticle {
   title          String
   content        String   // Markdown
   category       String
-  type           TicketType
+  articleType    TicketType
   tags           String[]
   isPublished    Boolean  @default(false)
   views          Int      @default(0)

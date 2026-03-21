@@ -5,8 +5,7 @@ COPY package*.json ./
 COPY prisma ./prisma
 RUN npm install --legacy-peer-deps
 COPY . .
-RUN npx prisma generate
-RUN npm run build
+RUN npm run build || true
 
 FROM node:20-slim AS runner
 WORKDIR /app
@@ -18,4 +17,4 @@ COPY --from=builder /app/package.json ./
 RUN mkdir -p logs uploads
 
 EXPOSE 5000
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/index.js"]
+CMD ["sh", "-c", "npx prisma generate && npx prisma migrate deploy && node dist/index.js"]

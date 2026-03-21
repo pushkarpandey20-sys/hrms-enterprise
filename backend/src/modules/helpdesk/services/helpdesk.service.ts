@@ -13,7 +13,7 @@ const SLA_HOURS: Record<TicketPriority, number> = {
 // ─── Categories ───────────────────────────────────────────────────────────────
 
 export const createCategory = async (orgId: string, data: {
-  name: string; type: TicketType; description?: string;
+  name: string; categoryType: TicketType; description?: string;
   slaHours?: number; assignedTeamId?: string;
 }) => {
   return prisma.helpdeskCategory.create({
@@ -21,9 +21,9 @@ export const createCategory = async (orgId: string, data: {
   });
 };
 
-export const listCategories = async (orgId: string, type?: TicketType) => {
+export const listCategories = async (orgId: string, categoryType?: TicketType) => {
   return prisma.helpdeskCategory.findMany({
-    where: { organizationId: orgId, isActive: true, ...(type ? { type } : {}) },
+    where: { organizationId: orgId, isActive: true, ...(categoryType ? { categoryType } : {}) },
     include: { _count: { select: { tickets: true } } },
     orderBy: { name: 'asc' },
   });
@@ -58,7 +58,7 @@ export const createTicket = async (orgId: string, requestedById: string, data: {
       subject: data.subject,
       description: data.description,
       priority: data.priority,
-      type: category.type,
+      ticketType: category.categoryType,
       slaDeadline,
       assignedToId,
       attachments: data.attachments
@@ -88,7 +88,7 @@ export const createTicket = async (orgId: string, requestedById: string, data: {
 export const listTickets = async (orgId: string, filters: {
   status?: TicketStatus;
   priority?: TicketPriority;
-  type?: TicketType;
+  ticketType?: TicketType;
   assignedToId?: string;
   requestedById?: string;
   page?: number; pageSize?: number;
@@ -100,7 +100,7 @@ export const listTickets = async (orgId: string, filters: {
     organizationId: orgId,
     ...(filters.status ? { status: filters.status } : {}),
     ...(filters.priority ? { priority: filters.priority } : {}),
-    ...(filters.type ? { type: filters.type } : {}),
+    ...(filters.ticketType ? { ticketType: filters.ticketType } : {}),
     ...(filters.assignedToId ? { assignedToId: filters.assignedToId } : {}),
     ...(filters.requestedById ? { requestedById: filters.requestedById } : {}),
   };
@@ -109,7 +109,7 @@ export const listTickets = async (orgId: string, filters: {
     prisma.helpdeskTicket.findMany({
       where,
       include: {
-        category: { select: { name: true, type: true } },
+        category: { select: { name: true, categoryType: true } },
         requestedBy: { select: { displayName: true, email: true } },
         assignedTo: { select: { displayName: true, email: true } },
         _count: { select: { comments: true, attachments: true } },
@@ -207,7 +207,7 @@ export const submitCsat = async (ticketId: string, orgId: string, userId: string
 // ─── Knowledge Base ───────────────────────────────────────────────────────────
 
 export const createArticle = async (orgId: string, authorId: string, data: {
-  title: string; content: string; category: TicketType;
+  title: string; content: string; articleType: TicketType;
   tags?: string[]; isPublished?: boolean;
 }) => {
   return prisma.knowledgeArticle.create({
@@ -220,12 +220,12 @@ export const createArticle = async (orgId: string, authorId: string, data: {
   });
 };
 
-export const searchArticles = async (orgId: string, query?: string, category?: TicketType) => {
+export const searchArticles = async (orgId: string, query?: string, articleType?: TicketType) => {
   return prisma.knowledgeArticle.findMany({
     where: {
       organizationId: orgId,
       isPublished: true,
-      ...(category ? { category } : {}),
+      ...(articleType ? { articleType } : {}),
       ...(query
         ? {
             OR: [
@@ -276,7 +276,7 @@ export const getHelpdeskAnalytics = async (orgId: string) => {
       _count: true,
     }),
     prisma.helpdeskTicket.groupBy({
-      by: ['type'],
+      by: ['ticketType'],
       where: { organizationId: orgId },
       _count: true,
     }),

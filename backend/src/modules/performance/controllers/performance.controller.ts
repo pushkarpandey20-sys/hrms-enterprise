@@ -18,7 +18,7 @@ const goalSchema = z.object({
   employeeId: z.string().uuid(),
   title: z.string().min(1),
   description: z.string().optional(),
-  type: z.nativeEnum(GoalType),
+  goalType: z.nativeEnum(GoalType),
   category: z.nativeEnum(GoalCategory),
   targetValue: z.number().positive().optional(),
   weightage: z.number().min(0).max(100).optional(),
