@@ -43,6 +43,7 @@ model Organization {
   announcements  Announcement[]
   attendancePolicies AttendancePolicy[]
   payrollComponents PayrollComponent[]
+  roles          Role[]
 }
 
 // ─────────────────────────────────────────────
@@ -169,6 +170,9 @@ model Employee {
   salaryRevisions  SalaryRevision[]
   auditLogs        AuditLog[]       @relation("AuditEmployee")
   customFieldValues CustomFieldValue[]
+  goals            Goal[]
+  performanceReviews PerformanceReview[]
+  pipPlans         PIPPlan[]
 
   @@index([organizationId])
   @@index([departmentId])
@@ -623,6 +627,7 @@ model Asset {
   category        AssetCategory? @relation(fields: [categoryId], references: [id])
   assignments     AssetAssignment[]
   maintenanceLogs AssetMaintenance[]
+  repairTickets   RepairTicket[]
 }
 
 model AssetAssignment {
