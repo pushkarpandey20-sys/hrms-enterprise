@@ -6,7 +6,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { authApi } from '@/services/api';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('admin@acmecorp.com');
+  const [email, setEmail] = useState('admin@wheeley.in');
   const [password, setPassword] = useState('Admin@123');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -39,10 +39,8 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex bg-navy overflow-hidden">
-      {/* Left panel — animated background */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-navy via-[#0D1829] to-[#0A1628]" />
-        {/* Animated mesh */}
         <div className="absolute inset-0">
           {[...Array(6)].map((_, i) => (
             <motion.div
@@ -60,9 +58,7 @@ export default function LoginPage() {
             />
           ))}
         </div>
-        {/* Grid overlay */}
         <div className="absolute inset-0 opacity-5" style={{ backgroundImage: 'linear-gradient(rgba(59,130,246,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,0.5) 1px, transparent 1px)', backgroundSize: '48px 48px' }} />
-
         <div className="relative z-10 flex flex-col justify-center px-16">
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
             <div className="flex items-center gap-3 mb-12">
@@ -70,7 +66,7 @@ export default function LoginPage() {
                 <Building2 className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="font-display text-2xl font-bold text-white">HRMS</h1>
+                <h1 className="font-display text-2xl font-bold text-white">Wheeley HRMS</h1>
                 <p className="text-xs text-muted-foreground uppercase tracking-widest">Enterprise Platform</p>
               </div>
             </div>
@@ -78,8 +74,6 @@ export default function LoginPage() {
               Manage your<br /><span className="gradient-text">workforce</span><br />effortlessly.
             </h2>
             <p className="text-muted-foreground text-lg max-w-md">Attendance, payroll, leave, assets — all in one powerful platform built for modern enterprises.</p>
-            
-            {/* Feature pills */}
             <div className="flex flex-wrap gap-2 mt-8">
               {['GPS Attendance', 'Smart Payroll', 'Leave Management', 'Asset Tracking', 'Analytics'].map(f => (
                 <span key={f} className="glass-card px-3 py-1.5 text-xs text-electric font-medium rounded-full">{f}</span>
@@ -89,7 +83,6 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Right panel — login form */}
       <div className="flex-1 flex items-center justify-center px-6">
         <motion.div
           initial={{ opacity: 0, x: 20 }}
@@ -136,7 +129,7 @@ export default function LoginPage() {
                   <input
                     type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} required
                     className="w-full h-11 pl-10 pr-12 bg-secondary/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-electric/50 focus:border-electric/50 transition-colors"
-                    placeholder="••••••••"
+                    placeholder="••••••••" 
                   />
                   <button type="button" onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
@@ -169,7 +162,7 @@ export default function LoginPage() {
           )}
 
           <p className="mt-6 text-center text-xs text-muted-foreground/60">
-            Demo credentials: admin@acmecorp.com / Admin@123
+            Demo credentials: admin@wheeley.in / Admin@123
           </p>
         </motion.div>
       </div>
