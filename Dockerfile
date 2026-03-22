@@ -17,4 +17,4 @@ COPY --from=builder /app/package.json ./
 RUN mkdir -p logs uploads
 
 EXPOSE 5000
-CMD ["sh", "-c", "npx prisma generate && npx prisma migrate deploy && node dist/index.js"]
+CMD ["npm", "start"]
