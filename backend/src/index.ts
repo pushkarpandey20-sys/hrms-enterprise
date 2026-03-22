@@ -12,14 +12,14 @@ async function bootstrap() {
   try {
     // Test DB connection
     await prisma.$connect();
-    logger.info('✅  PostgreSQL connected');
+    logger.info('\u2705  PostgreSQL connected');
 
-    // Redis (optional — background jobs won't work without it)
+    // Redis (optional \u2014 background jobs won't work without it)
     try {
       await connectRedis();
-      logger.info('✅  Redis connected');
+      logger.info('\u2705  Redis connected');
     } catch (redisErr) {
-      logger.warn('⚠️  Redis not available, continuing without it:', redisErr);
+      logger.warn('\u26a0\ufe0f  Redis not available, continuing without it:', redisErr);
     }
 
     // HTTP + Socket.io
@@ -27,10 +27,10 @@ async function bootstrap() {
     initSocket(httpServer);
 
     httpServer.listen(PORT, () => {
-      logger.info(`🚀  HRMS API running on port ${PORT} [${process.env.NODE_ENV}]`);
+      logger.info(`\ud83d\ude80  HRMS API running on port ${PORT} [${process.env.NODE_ENV}]`);
     });
   } catch (err) {
-    logger.error('❌  Bootstrap failed:', err);
+    logger.error('\u274c  Bootstrap failed:', err);
     process.exit(1);
   }
 }
@@ -38,6 +38,6 @@ async function bootstrap() {
 bootstrap();
 
 process.on('unhandledRejection', (err) => {
-  logger.error('Unhandled rejection:', err);
-  process.exit(1);
+  logger.error('Unhandled rejection (non-fatal, server kept alive):', err);
+  // Do NOT exit \u2014 keep the server running
 });
