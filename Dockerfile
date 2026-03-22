@@ -14,7 +14,8 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/package.json ./
+COPY --from=builder /app/tsconfig.json ./tsconfig.json
 RUN mkdir -p logs uploads
 
 EXPOSE 5000
-CMD ["sh", "-c", "npx prisma generate && npx prisma db push --accept-data-loss && node dist/index.js"]
+CMD ["sh", "-c", "npx prisma generate && npx prisma db push --accept-data-loss && (npx ts-node --transpile-only prisma/seed.ts || true) && node dist/index.js"]
