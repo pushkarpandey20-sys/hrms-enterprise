@@ -22,6 +22,7 @@ import AttendanceDashboardPage from './pages/attendance/AttendanceDashboardPage'
 import AttendanceRegisterPage from './pages/attendance/AttendanceRegisterPage';
 import MyAttendancePage from './pages/attendance/MyAttendancePage';
 import AttendancePoliciesPage from './pages/attendance/AttendancePoliciesPage';
+import HotspotsPage from './pages/attendance/HotspotsPage';
 
 // Leave
 import LeaveManagementPage from './pages/leave/LeaveManagementPage';
@@ -56,6 +57,13 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function RoleRoute({ children, roles }: { children: React.ReactNode; roles: string[] }) {
+  const { isAuthenticated, user } = useAuthStore();
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!roles.includes(user?.role || '')) return <Navigate to="/dashboard" replace />;
+  return <>{children}</>;
+}
+
 export default function App() {
   return (
     <>
@@ -66,45 +74,46 @@ export default function App() {
           <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<DashboardPage />} />
-            
+
             {/* Employees */}
-            <Route path="employees" element={<EmployeeListPage />} />
-            <Route path="employees/new" element={<EmployeeOnboardingPage />} />
+            <Route path="employees" element={<RoleRoute roles={['SUPER_ADMIN', 'HR_ADMIN', 'MANAGER']}><EmployeeListPage /></RoleRoute>} />
+            <Route path="employees/new" element={<RoleRoute roles={['SUPER_ADMIN', 'HR_ADMIN']}><EmployeeOnboardingPage /></RoleRoute>} />
             <Route path="employees/org-chart" element={<OrgChartPage />} />
             <Route path="employees/:id" element={<EmployeeDetailPage />} />
-            
+
             {/* Attendance */}
-            <Route path="attendance" element={<AttendanceDashboardPage />} />
-            <Route path="attendance/register" element={<AttendanceRegisterPage />} />
+            <Route path="attendance" element={<RoleRoute roles={['SUPER_ADMIN', 'HR_ADMIN', 'MANAGER']}><AttendanceDashboardPage /></RoleRoute>} />
+            <Route path="attendance/register" element={<RoleRoute roles={['SUPER_ADMIN', 'HR_ADMIN']}><AttendanceRegisterPage /></RoleRoute>} />
             <Route path="attendance/my" element={<MyAttendancePage />} />
-            <Route path="attendance/policies" element={<AttendancePoliciesPage />} />
-            
+            <Route path="attendance/policies" element={<RoleRoute roles={['SUPER_ADMIN', 'HR_ADMIN']}><AttendancePoliciesPage /></RoleRoute>} />
+            <Route path="attendance/hotspots" element={<RoleRoute roles={['SUPER_ADMIN', 'HR_ADMIN']}><HotspotsPage /></RoleRoute>} />
+
             {/* Leave */}
-            <Route path="leave" element={<LeaveManagementPage />} />
+            <Route path="leave" element={<RoleRoute roles={['SUPER_ADMIN', 'HR_ADMIN', 'MANAGER']}><LeaveManagementPage /></RoleRoute>} />
             <Route path="leave/calendar" element={<LeaveCalendarPage />} />
             <Route path="leave/my" element={<MyLeavesPage />} />
-            
+
             {/* Payroll */}
-            <Route path="payroll" element={<PayrollDashboardPage />} />
-            <Route path="payroll/run" element={<PayrollRunPage />} />
+            <Route path="payroll" element={<RoleRoute roles={['SUPER_ADMIN', 'HR_ADMIN']}><PayrollDashboardPage /></RoleRoute>} />
+            <Route path="payroll/run" element={<RoleRoute roles={['SUPER_ADMIN', 'HR_ADMIN']}><PayrollRunPage /></RoleRoute>} />
             <Route path="payroll/my-payslips" element={<MyPayslipsPage />} />
-            
+
             {/* Assets */}
-            <Route path="assets" element={<AssetListPage />} />
-            <Route path="assets/:id" element={<AssetDetailPage />} />
-            
+            <Route path="assets" element={<RoleRoute roles={['SUPER_ADMIN', 'HR_ADMIN', 'MANAGER']}><AssetListPage /></RoleRoute>} />
+            <Route path="assets/:id" element={<RoleRoute roles={['SUPER_ADMIN', 'HR_ADMIN', 'MANAGER']}><AssetDetailPage /></RoleRoute>} />
+
             {/* Reports */}
-            <Route path="reports" element={<ReportsDashboardPage />} />
-            
+            <Route path="reports" element={<RoleRoute roles={['SUPER_ADMIN', 'HR_ADMIN', 'MANAGER']}><ReportsDashboardPage /></RoleRoute>} />
+
             {/* Settings */}
             <Route path="settings" element={<SettingsPage />} />
 
             {/* Enterprise modules */}
-            <Route path="rbac" element={<RBACPage />} />
-            <Route path="repair" element={<RepairPage />} />
-            <Route path="performance" element={<PerformancePage />} />
+            <Route path="rbac" element={<RoleRoute roles={['SUPER_ADMIN']}><RBACPage /></RoleRoute>} />
+            <Route path="repair" element={<RoleRoute roles={['SUPER_ADMIN', 'HR_ADMIN']}><RepairPage /></RoleRoute>} />
+            <Route path="performance" element={<RoleRoute roles={['SUPER_ADMIN', 'HR_ADMIN', 'MANAGER']}><PerformancePage /></RoleRoute>} />
             <Route path="helpdesk" element={<HelpdeskPage />} />
-            <Route path="offboarding" element={<OffboardingPage />} />
+            <Route path="offboarding" element={<RoleRoute roles={['SUPER_ADMIN', 'HR_ADMIN']}><OffboardingPage /></RoleRoute>} />
           </Route>
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
