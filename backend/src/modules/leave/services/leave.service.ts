@@ -3,6 +3,9 @@ import { ApiError } from '../../../shared/utils/ApiError';
 import { cloudinary } from '../../../config/cloudinary';
 import { notificationService } from '../../notifications/services/notification.service';
 import ExcelJS from 'exceljs';
+import winston from 'winston';
+
+const logger = winston.createLogger({ transports: [new winston.transports.Console()] });
 
 export class LeaveService {
   async applyLeave(employeeId: string, data: {
@@ -37,13 +40,17 @@ export class LeaveService {
 
     let attachmentUrl: string | undefined;
     if (data.attachmentBuffer) {
-      const result = await new Promise<{ secure_url: string }>((resolve, reject) => {
-        cloudinary.uploader.upload_stream(
-          { folder: 'hrms/leave-attachments' },
-          (err, res) => err ? reject(err) : resolve(res as any),
-        ).end(data.attachmentBuffer);
-      });
-      attachmentUrl = result.secure_url;
+      try {
+        const result = await new Promise<{ secure_url: string }>((resolve, reject) => {
+          cloudinary.uploader.upload_stream(
+            { folder: 'hrms/leave-attachments' },
+            (err, res) => err ? reject(err) : resolve(res as any),
+          ).end(data.attachmentBuffer);
+        });
+        attachmentUrl = result.secure_url;
+      } catch (err) {
+        logger.warn('Leave attachment upload failed (non-fatal):', err);
+      }
     }
 
     const leave = await prisma.leaveRequest.create({
@@ -63,18 +70,22 @@ export class LeaveService {
       data: { pendingDays: { increment: totalDays } },
     });
 
-    // Notify manager
-    if (leave.employee.managerId) {
-      const managerUser = await prisma.user.findFirst({ where: { employeeId: leave.employee.managerId } });
-      if (managerUser) {
-        await notificationService.create({
-          userId: managerUser.id,
-          title: 'New Leave Request',
-          message: `${leave.employee.firstName} has applied for ${leave.leaveType.name} from ${start.toLocaleDateString()} to ${end.toLocaleDateString()}`,
-          type: 'LEAVE',
-          referenceId: leave.id,
-        });
+    // Notify manager (non-fatal)
+    try {
+      if (leave.employee.managerId) {
+        const managerUser = await prisma.user.findFirst({ where: { employeeId: leave.employee.managerId } });
+        if (managerUser) {
+          await notificationService.create({
+            userId: managerUser.id,
+            title: 'New Leave Request',
+            message: `${leave.employee.firstName} has applied for ${leave.leaveType.name} from ${start.toLocaleDateString()} to ${end.toLocaleDateString()}`,
+            type: 'LEAVE',
+            referenceId: leave.id,
+          });
+        }
       }
+    } catch (err) {
+      logger.warn('Manager notification failed (non-fatal):', err);
     }
 
     return leave;
@@ -147,16 +158,20 @@ export class LeaveService {
       }
     }
 
-    // Notify employee
-    const empUser = await prisma.user.findFirst({ where: { employeeId: leave.employeeId } });
-    if (empUser) {
-      await notificationService.create({
-        userId: empUser.id,
-        title: `Leave ${action === 'APPROVE' ? 'Approved' : 'Rejected'}`,
-        message: `Your ${leave.leaveType.name} leave from ${leave.startDate.toLocaleDateString()} has been ${action === 'APPROVE' ? 'approved' : 'rejected'}`,
-        type: 'LEAVE',
-        referenceId: leaveId,
-      });
+    // Notify employee (non-fatal)
+    try {
+      const empUser = await prisma.user.findFirst({ where: { employeeId: leave.employeeId } });
+      if (empUser) {
+        await notificationService.create({
+          userId: empUser.id,
+          title: `Leave ${action === 'APPROVE' ? 'Approved' : 'Rejected'}`,
+          message: `Your ${leave.leaveType.name} leave from ${leave.startDate.toLocaleDateString()} has been ${action === 'APPROVE' ? 'approved' : 'rejected'}`,
+          type: 'LEAVE',
+          referenceId: leaveId,
+        });
+      }
+    } catch (err) {
+      logger.warn('Employee notification failed (non-fatal):', err);
     }
 
     return updated;
