@@ -4,13 +4,17 @@ import {
   LayoutDashboard, Users, Clock, Calendar, CreditCard, Package,
   BarChart3, Bell, Settings, LogOut, ChevronLeft, ChevronRight,
   Building2, TreePine, Shield, Wrench, Target, HelpCircle, LogOut as ExitIcon,
+  FileText, MapPin, Wifi,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUIStore } from '@/stores/uiStore';
 import { useAuthStore } from '@/stores/authStore';
 import { authApi } from '@/services/api';
 
-const navGroups = [
+type NavItem = { to: string; icon: any; label: string; roles?: string[] };
+type NavGroup = { label: string; items: NavItem[] };
+
+const navGroups: NavGroup[] = [
   {
     label: 'Main',
     items: [
@@ -20,38 +24,42 @@ const navGroups = [
   {
     label: 'People',
     items: [
-      { to: '/employees', icon: Users, label: 'Employees' },
+      { to: '/employees', icon: Users, label: 'Employees', roles: ['SUPER_ADMIN', 'HR_ADMIN', 'MANAGER'] },
       { to: '/employees/org-chart', icon: TreePine, label: 'Org Chart' },
     ],
   },
   {
     label: 'Time & Leave',
     items: [
-      { to: '/attendance', icon: Clock, label: 'Attendance' },
-      { to: '/leave', icon: Calendar, label: 'Leave' },
+      { to: '/attendance', icon: Clock, label: 'Attendance', roles: ['SUPER_ADMIN', 'HR_ADMIN', 'MANAGER'] },
+      { to: '/attendance/my', icon: Clock, label: 'My Attendance', roles: ['EMPLOYEE'] },
+      { to: '/leave', icon: Calendar, label: 'Leave', roles: ['SUPER_ADMIN', 'HR_ADMIN', 'MANAGER'] },
+      { to: '/leave/my', icon: Calendar, label: 'My Leaves', roles: ['EMPLOYEE'] },
+      { to: '/attendance/hotspots', icon: Wifi, label: 'Hotspots', roles: ['SUPER_ADMIN', 'HR_ADMIN'] },
     ],
   },
   {
     label: 'Finance',
     items: [
-      { to: '/payroll', icon: CreditCard, label: 'Payroll' },
-      { to: '/assets', icon: Package, label: 'Assets' },
+      { to: '/payroll', icon: CreditCard, label: 'Payroll', roles: ['SUPER_ADMIN', 'HR_ADMIN'] },
+      { to: '/payroll/my-payslips', icon: FileText, label: 'My Payslips', roles: ['EMPLOYEE', 'MANAGER'] },
+      { to: '/assets', icon: Package, label: 'Assets', roles: ['SUPER_ADMIN', 'HR_ADMIN', 'MANAGER'] },
     ],
   },
   {
     label: 'Insights',
     items: [
-      { to: '/reports', icon: BarChart3, label: 'Reports' },
+      { to: '/reports', icon: BarChart3, label: 'Reports', roles: ['SUPER_ADMIN', 'HR_ADMIN', 'MANAGER'] },
     ],
   },
   {
     label: 'Enterprise',
     items: [
-      { to: '/rbac', icon: Shield, label: 'Access Control' },
-      { to: '/repair', icon: Wrench, label: 'Asset Repair' },
-      { to: '/performance', icon: Target, label: 'Performance' },
+      { to: '/rbac', icon: Shield, label: 'Access Control', roles: ['SUPER_ADMIN'] },
+      { to: '/repair', icon: Wrench, label: 'Asset Repair', roles: ['SUPER_ADMIN', 'HR_ADMIN'] },
+      { to: '/performance', icon: Target, label: 'Performance', roles: ['SUPER_ADMIN', 'HR_ADMIN', 'MANAGER'] },
       { to: '/helpdesk', icon: HelpCircle, label: 'Helpdesk' },
-      { to: '/offboarding', icon: ExitIcon, label: 'Offboarding' },
+      { to: '/offboarding', icon: ExitIcon, label: 'Offboarding', roles: ['SUPER_ADMIN', 'HR_ADMIN'] },
     ],
   },
 ];
@@ -60,11 +68,17 @@ export default function Sidebar() {
   const { sidebarCollapsed, toggleSidebar } = useUIStore();
   const { user, logout, refreshToken } = useAuthStore() as any;
   const navigate = useNavigate();
+  const role: string = user?.role || 'EMPLOYEE';
 
   const handleLogout = async () => {
     try { await authApi.logout(refreshToken); } catch {}
     logout();
     navigate('/login');
+  };
+
+  const isVisible = (item: NavItem) => {
+    if (!item.roles || item.roles.length === 0) return true;
+    return item.roles.includes(role);
   };
 
   return (
@@ -96,39 +110,44 @@ export default function Sidebar() {
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-6">
-        {navGroups.map((group) => (
-          <div key={group.label}>
-            {!sidebarCollapsed && (
-              <p className="text-[10px] uppercase tracking-widest text-muted-foreground/60 px-3 mb-1">{group.label}</p>
-            )}
-            <ul className="space-y-0.5">
-              {group.items.map(({ to, icon: Icon, label }) => (
-                <li key={to}>
-                  <NavLink
-                    to={to}
-                    className={({ isActive }) =>
-                      cn('sidebar-link', isActive && 'active', sidebarCollapsed && 'justify-center px-0 py-2.5')
-                    }
-                    title={sidebarCollapsed ? label : undefined}
-                  >
-                    <Icon className="w-4 h-4 flex-shrink-0" />
-                    {!sidebarCollapsed && <span>{label}</span>}
-                  </NavLink>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
+        {navGroups.map((group) => {
+          const visibleItems = group.items.filter(isVisible);
+          if (visibleItems.length === 0) return null;
+          return (
+            <div key={group.label}>
+              {!sidebarCollapsed && (
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground/60 px-3 mb-1">{group.label}</p>
+              )}
+              <ul className="space-y-0.5">
+                {visibleItems.map(({ to, icon: Icon, label }) => (
+                  <li key={to}>
+                    <NavLink
+                      to={to}
+                      end={to === '/attendance' || to === '/leave'}
+                      className={({ isActive }) =>
+                        cn('sidebar-link', isActive && 'active', sidebarCollapsed && 'justify-center px-0 py-2.5')
+                      }
+                      title={sidebarCollapsed ? label : undefined}
+                    >
+                      <Icon className="w-4 h-4 flex-shrink-0" />
+                      {!sidebarCollapsed && <span>{label}</span>}
+                    </NavLink>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+        })}
       </nav>
 
       {/* Bottom actions */}
       <div className="border-t border-border p-2 space-y-0.5 flex-shrink-0">
         <NavLink to="/settings" className={({ isActive }) => cn('sidebar-link', isActive && 'active', sidebarCollapsed && 'justify-center')}>
-          <Settings className="w-4 h-4 flex-shrink-0" />
+          <Settings className="w-4 h-4 flex-shring-0" />
           {!sidebarCollapsed && <span>Settings</span>}
         </NavLink>
         <button onClick={handleLogout} className={cn('sidebar-link w-full hover:text-red-400', sidebarCollapsed && 'justify-center')}>
-          <LogOut className="w-4 h-4 flex-shrink-0" />
+          <LogOut className="w-4 h-4 flex-shring-0" />
           {!sidebarCollapsed && <span>Logout</span>}
         </button>
       </div>
