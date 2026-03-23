@@ -1,1 +1,1685 @@
-��-
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// ORGANIZATION
+// ─────────────────────────────────────────────
+model Organization {
+  id             String   @id @default(uuid())
+  name           String
+  legalName      String?
+  logoUrl        String?
+  website        String?
+  email          String?
+  phone          String?
+  gstin          String?
+  pan            String?
+  addressLine1   String?
+  addressLine2   String?
+  city           String?
+  state          String?
+  country        String   @default("India")
+  pincode        String?
+  incorporatedAt DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  departments    Department[]
+  designations   Designation[]
+  employees      Employee[]
+  users          User[]
+  holidays       Holiday[]
+  leaveTypes     LeaveType[]
+  payrollRuns    PayrollRun[]
+  assets         Asset[]
+  geoFences      GeoFence[]
+  wifiHotspots   WifiHotspot[]
+  announcements  Announcement[]
+  attendancePolicies AttendancePolicy[]
+  payrollComponents PayrollComponent[]
+  roles          Role[]
+}
+
+// ─────────────────────────────────────────────
+// DEPARTMENT & DESIGNATION
+// ─────────────────────────────────────────────
+model Department {
+  id             String   @id @default(uuid())
+  name           String
+  code           String?
+  description    String?
+  organizationId String
+  managerId      String?
+  parentId       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  manager        Employee?    @relation("DeptManager", fields: [managerId], references: [id])
+  parent         Department?  @relation("DeptHierarchy", fields: [parentId], references: [id])
+  children       Department[] @relation("DeptHierarchy")
+  employees      Employee[]
+
+  @@unique([organizationId, code])
+}
+
+model Designation {
+  id             String   @id @default(uuid())
+  name           String
+  level          Int      @default(1)
+  organizationId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  employees      Employee[]
+}
+
+// ─────────────────────────────────────────────
+// EMPLOYEE
+// ─────────────────────────────────────────────
+model Employee {
+  id               String           @id @default(uuid())
+  employeeCode     String           @unique
+  organizationId   String
+  departmentId     String?
+  designationId    String?
+  managerId        String?
+
+  // Personal
+  firstName        String
+  lastName         String
+  middleName       String?
+  displayName      String?
+  gender           Gender?
+  dateOfBirth      DateTime?
+  bloodGroup       BloodGroup?
+  maritalStatus    MaritalStatus?
+  nationality      String?
+  photoUrl         String?
+
+  // Contact
+  personalEmail    String?
+  workEmail        String
+  personalPhone    String?
+  workPhone        String?
+  currentAddress   String?
+  permanentAddress String?
+  city             String?
+  state            String?
+  country          String?
+  pincode          String?
+
+  // Professional
+  joiningDate      DateTime
+  confirmationDate DateTime?
+  probationEndDate DateTime?
+  relievingDate    DateTime?
+  status           EmploymentStatus @default(ACTIVE)
+  employmentType   EmploymentType   @default(FULL_TIME)
+  workLocation     String?
+
+  // Identity
+  panNumber        String?
+  aadharNumber     String?
+  passportNumber   String?
+  passportExpiry   DateTime?
+  drivingLicense   String?
+  uan              String?  // PF UAN
+  pfAccountNumber  String?
+  esiNumber        String?
+
+  // Bank
+  bankName         String?
+  bankAccountNo    String?
+  bankIfscCode     String?
+  bankBranch       String?
+  accountType      BankAccountType?
+
+  // Face recognition
+  faceEnrolled     Boolean          @default(false)
+  faceReferenceIds String[]
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  organization     Organization    @relation(fields: [organizationId], references: [id])
+  department       Department?     @relation(fields: [departmentId], references: [id])
+  designation      Designation?    @relation(fields: [designationId], references: [id])
+  manager          Employee?       @relation("ReportingTo", fields: [managerId], references: [id])
+  directReports    Employee[]      @relation("ReportingTo")
+  managedDepts     Department[]    @relation("DeptManager")
+
+  user             User?
+  offboardingCase  OffboardingCase?
+  emergencyContacts EmergencyContact[]
+  documents        EmployeeDocument[]
+  attendances      Attendance[]
+  leaveRequests    LeaveRequest[]
+  leaveBalances    LeaveBalance[]
+  assetAssignments AssetAssignment[]
+  payslips         Payslip[]
+  loans            Loan[]
+  salaryStructures SalaryStructure[]
+  salaryRevisions  SalaryRevision[]
+  auditLogs        AuditLog[]       @relation("AuditEmployee")
+  customFieldValues CustomFieldValue[]
+  goals            Goal[]
+  performanceReviews PerformanceReview[]
+  pipPlans         PIPPlan[]
+  wifiHotspots     WifiHotspot[]    @relation("EmployeeHotspots")
+  geoFences        GeoFence[]       @relation("EmployeeGeoFences")
+
+  @@index([organizationId])
+  @@index([departmentId])
+  @@index([status])
+}
+
+model EmergencyContact {
+  id           String   @id @default(uuid())
+  employeeId   String
+  name         String
+  relationship String
+  phone        String
+  email        String?
+  address      String?
+  isPrimary    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  employee     Employee @relation(fields: [employeeId], references: [id])
+}
+
+// ─────────────────────────────────────────────
+// USER / AUTH
+// ─────────────────────────────────────────────
+model User {
+  id                String    @id @default(uuid())
+  organizationId    String
+  employeeId        String?   @unique
+  email             String    @unique
+  passwordHash      String
+  role              UserRole  @default(EMPLOYEE)
+  isActive          Boolean   @default(true)
+  isMfaEnabled      Boolean   @default(false)
+  mfaSecret         String?
+  lastLoginAt       DateTime?
+  lastLoginIp       String?
+  failedLoginCount  Int       @default(0)
+  lockedUntil       DateTime?
+  passwordResetToken String?
+  passwordResetExpiry DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  organization      Organization @relation(fields: [organizationId], references: [id])
+  employee          Employee?    @relation(fields: [employeeId], references: [id])
+  permissions       UserPermission[]
+  refreshTokens     RefreshToken[]
+  auditLogs         AuditLog[]   @relation("AuditUser")
+  notifications     Notification[]
+}
+
+model RefreshToken {
+  id          String   @id @default(uuid())
+  userId      String
+  token       String   @unique
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  revokedAt   DateTime?
+  deviceInfo  String?
+
+  user        User @relation(fields: [userId], references: [id])
+}
+
+model UserPermission {
+  id       String @id @default(uuid())
+  userId   String
+  module   String
+  actions  String[]  // ["view","create","edit","delete"]
+
+  user     User @relation(fields: [userId], references: [id])
+  @@unique([userId, module])
+}
+
+// ─────────────────────────────────────────────
+// ATTENDANCE
+// ─────────────────────────────────────────────
+model AttendancePolicy {
+  id              String   @id @default(uuid())
+  organizationId  String
+  name            String
+  shiftName       String
+  shiftStartTime  String   // "09:00"
+  shiftEndTime    String   // "18:00"
+  gracePeriodMins Int      @default(15)
+  halfDayMins     Int      @default(240)
+  fullDayMins     Int      @default(480)
+  overtimeAfterMins Int    @default(540)
+  geoFenceRadius  Int      @default(100) // meters
+  isDefault       Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  organization    Organization @relation(fields: [organizationId], references: [id])
+  attendances     Attendance[]
+}
+
+model GeoFence {
+  id             String   @id @default(uuid())
+  organizationId String
+  name           String
+  latitude       Float
+  longitude      Float
+  radius         Int      // meters
+  address        String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  employees      Employee[]   @relation("EmployeeGeoFences")
+}
+
+model WifiHotspot {
+  id             String   @id @default(uuid())
+  organizationId String
+  name           String
+  ssid           String
+  bssid          String?
+  locationName   String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  employees      Employee[]   @relation("EmployeeHotspots")
+}
+
+model Attendance {
+  id                String           @id @default(uuid())
+  employeeId        String
+  policyId          String?
+  date              DateTime
+  clockIn           DateTime?
+  clockOut          DateTime?
+  clockInLat        Float?
+  clockInLng        Float?
+  clockOutLat       Float?
+  clockOutLng       Float?
+  clockInAccuracy   Float?
+  clockInSelfieUrl  String?
+  clockOutSelfieUrl String?
+  clockInWifiSsid   String?
+  source            AttendanceSource @default(MANUAL)
+  status            AttendanceStatus @default(PRESENT)
+  isGeofenceValid   Boolean?
+  isFaceVerified    Boolean?
+  faceConfidence    Float?
+  workingMins       Int?
+  overtimeMins      Int?
+  isException       Boolean          @default(false)
+  exceptionReason   String?
+  approvedById      String?
+  approvedAt        DateTime?
+  remarks           String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  employee          Employee         @relation(fields: [employeeId], references: [id])
+  policy            AttendancePolicy? @relation(fields: [policyId], references: [id])
+  breaks            AttendanceBreak[]
+
+  @@unique([employeeId, date])
+  @@index([employeeId])
+  @@index([date])
+}
+
+model AttendanceBreak {
+  id           String    @id @default(uuid())
+  attendanceId String
+  breakStart   DateTime
+  breakEnd     DateTime?
+  breakMins    Int?
+  breakType    String    @default("LUNCH")
+
+  attendance   Attendance @relation(fields: [attendanceId], references: [id])
+}
+
+// ─────────────────────────────────────────────
+// LEAVE
+// ─────────────────────────────────────────────
+model LeaveType {
+  id             String   @id @default(uuid())
+  organizationId String
+  name           String
+  code           String
+  description    String?
+  isPaid         Boolean  @default(true)
+  isCarryForward Boolean  @default(false)
+  maxCarryForward Int?
+  maxConsecutive  Int?
+  allowHalfDay   Boolean  @default(true)
+  requiresDoc    Boolean  @default(false)
+  accrualType    AccrualType @default(ANNUAL)
+  annualAllocation Int    @default(0)
+  color          String   @default("#3B82F6")
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  leaveRequests  LeaveRequest[]
+  leaveBalances  LeaveBalance[]
+
+  @@unique([organizationId, code])
+}
+
+model LeaveBalance {
+  id           String   @id @default(uuid())
+  employeeId   String
+  leaveTypeId  String
+  year         Int
+  totalDays    Float    @default(0)
+  usedDays     Float    @default(0)
+  pendingDays  Float    @default(0)
+  remainingDays Float   @default(0)
+  carriedOver  Float    @default(0)
+  updatedAt    DateTime @updatedAt
+
+  employee     Employee  @relation(fields: [employeeId], references: [id])
+  leaveType    LeaveType @relation(fields: [leaveTypeId], references: [id])
+
+  @@unique([employeeId, leaveTypeId, year])
+}
+
+model LeaveRequest {
+  id              String        @id @default(uuid())
+  employeeId      String
+  leaveTypeId     String
+  startDate       DateTime
+  endDate         DateTime
+  totalDays       Float
+  isHalfDay       Boolean       @default(false)
+  halfDayPeriod   HalfDayPeriod?
+  reason          String
+  attachmentUrl   String?
+  status          LeaveStatus   @default(PENDING)
+  managerNote     String?
+  hrNote          String?
+  approvedByMgrId String?
+  approvedByHrId  String?
+  mgrApprovedAt   DateTime?
+  hrApprovedAt    DateTime?
+  cancelledAt     DateTime?
+  cancelReason    String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  employee        Employee      @relation(fields: [employeeId], references: [id])
+  leaveType       LeaveType     @relation(fields: [leaveTypeId], references: [id])
+}
+
+model Holiday {
+  id             String      @id @default(uuid())
+  organizationId String
+  name           String
+  date           DateTime
+  holidayType    HolidayType @default(NATIONAL)
+  isOptional     Boolean     @default(false)
+  description    String?
+  createdAt      DateTime    @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+}
+
+// ─────────────────────────────────────────────
+// PAYROLL
+// ─────────────────────────────────────────────
+model PayrollComponent {
+  id             String          @id @default(uuid())
+  organizationId String
+  name           String
+  code           String
+  componentType  ComponentType   // EARNING | DEDUCTION | STATUTORY
+  calculationType CalcType       // FIXED | PERCENTAGE | FORMULA
+  calculationBase String?        // e.g. "BASIC" for percentage
+  value          Float?          // fixed amount or percentage
+  formula        String?
+  isTaxable      Boolean         @default(true)
+  isActive       Boolean         @default(true)
+  sortOrder      Int             @default(0)
+  createdAt      DateTime        @default(now())
+
+  organization   Organization    @relation(fields: [organizationId], references: [id])
+  salaryComponents SalaryComponent[]
+
+  @@unique([organizationId, code])
+}
+
+model SalaryStructure {
+  id             String   @id @default(uuid())
+  employeeId     String
+  effectiveFrom  DateTime
+  effectiveTo    DateTime?
+  ctc            Float
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  employee       Employee @relation(fields: [employeeId], references: [id])
+  components     SalaryComponent[]
+}
+
+model SalaryComponent {
+  id                String          @id @default(uuid())
+  salaryStructureId String
+  componentId       String
+  monthlyAmount     Float
+  annualAmount      Float
+
+  salaryStructure   SalaryStructure  @relation(fields: [salaryStructureId], references: [id])
+  component         PayrollComponent @relation(fields: [componentId], references: [id])
+}
+
+model SalaryRevision {
+  id            String   @id @default(uuid())
+  employeeId    String
+  effectiveDate DateTime
+  oldCtc        Float
+  newCtc        Float
+  revisedBy     String
+  reason        String?
+  createdAt     DateTime @default(now())
+
+  employee      Employee @relation(fields: [employeeId], references: [id])
+}
+
+model PayrollRun {
+  id             String         @id @default(uuid())
+  organizationId String
+  month          Int
+  year           Int
+  status         PayrollStatus  @default(DRAFT)
+  totalEmployees Int            @default(0)
+  totalGross     Float          @default(0)
+  totalDeductions Float         @default(0)
+  totalNetPay    Float          @default(0)
+  processedAt    DateTime?
+  approvedById   String?
+  approvedAt     DateTime?
+  paidAt         DateTime?
+  remarks        String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  organization   Organization   @relation(fields: [organizationId], references: [id])
+  payslips       Payslip[]
+
+  @@unique([organizationId, month, year])
+}
+
+model Payslip {
+  id               String      @id @default(uuid())
+  payrollRunId     String
+  employeeId       String
+  month            Int
+  year             Int
+  workingDays      Int
+  presentDays      Float
+  lopDays          Float        @default(0)
+  basicSalary      Float
+  grossEarnings    Float
+  totalDeductions  Float
+  netPay           Float
+  ytdGross         Float        @default(0)
+  ytdTax           Float        @default(0)
+  pfEmployee       Float        @default(0)
+  pfEmployer       Float        @default(0)
+  esiEmployee      Float        @default(0)
+  esiEmployer      Float        @default(0)
+  tds              Float        @default(0)
+  pt               Float        @default(0)
+  taxRegime        TaxRegime    @default(NEW)
+  earningsBreakdown Json
+  deductionsBreakdown Json
+  pdfUrl           String?
+  emailSentAt      DateTime?
+  createdAt        DateTime     @default(now())
+
+  payrollRun       PayrollRun   @relation(fields: [payrollRunId], references: [id])
+  employee         Employee     @relation(fields: [employeeId], references: [id])
+}
+
+model Loan {
+  id             String      @id @default(uuid())
+  employeeId     String
+  loanType       LoanType    @default(ADVANCE)
+  amount         Float
+  approvedAmount Float?
+  interestRate   Float       @default(0)
+  tenureMonths   Int
+  emiAmount      Float?
+  disbursedAt    DateTime?
+  status         LoanStatus  @default(PENDING)
+  purpose        String?
+  approvedById   String?
+  approvedAt     DateTime?
+  closedAt       DateTime?
+  outstandingAmt Float?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  employee       Employee    @relation(fields: [employeeId], references: [id])
+  repayments     LoanRepayment[]
+}
+
+model LoanRepayment {
+  id        String   @id @default(uuid())
+  loanId    String
+  month     Int
+  year      Int
+  amount    Float
+  paidAt    DateTime?
+  payslipId String?
+
+  loan      Loan @relation(fields: [loanId], references: [id])
+}
+
+// ─────────────────────────────────────────────
+// ASSETS
+// ─────────────────────────────────────────────
+model AssetCategory {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  parentId    String?
+  createdAt   DateTime @default(now())
+
+  parent      AssetCategory?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    AssetCategory[] @relation("CategoryHierarchy")
+  assets      Asset[]
+}
+
+model Asset {
+  id              String        @id @default(uuid())
+  organizationId  String
+  categoryId      String?
+  name            String
+  assetCode       String        @unique
+  serialNumber    String?
+  model           String?
+  manufacturer    String?
+  purchaseDate    DateTime?
+  purchaseCost    Float?
+  currentValue    Float?
+  depreciationRate Float?
+  warrantyExpiry  DateTime?
+  condition       AssetCondition @default(GOOD)
+  status          AssetStatus    @default(AVAILABLE)
+  locationId      String?
+  qrCodeUrl       String?
+  invoiceUrl      String?
+  notes           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  organization    Organization  @relation(fields: [organizationId], references: [id])
+  category        AssetCategory? @relation(fields: [categoryId], references: [id])
+  assignments     AssetAssignment[]
+  maintenanceLogs AssetMaintenance[]
+  repairTickets   RepairTicket[]
+}
+
+model AssetAssignment {
+  id             String              @id @default(uuid())
+  assetId        String
+  employeeId     String
+  assignedAt     DateTime            @default(now())
+  returnedAt     DateTime?
+  assignedById   String
+  returnedById   String?
+  conditionOut   AssetCondition      @default(GOOD)
+  conditionIn    AssetCondition?
+  notes          String?
+  acknowledgedAt DateTime?
+  isActive       Boolean             @default(true)
+
+  asset          Asset    @relation(fields: [assetId], references: [id])
+  employee       Employee @relation(fields: [employeeId], references: [id])
+}
+
+model AssetMaintenance {
+  id             String   @id @default(uuid())
+  assetId        String
+  maintenanceType String
+  scheduledAt    DateTime
+  completedAt    DateTime?
+  cost           Float?
+  vendor         String?
+  notes          String?
+  createdAt      DateTime @default(now())
+
+  asset          Asset @relation(fields: [assetId], references: [id])
+}
+
+// ─────────────────────────────────────────────
+// DOCUMENTS
+// ─────────────────────────────────────────────
+model EmployeeDocument {
+  id            String       @id @default(uuid())
+  employeeId    String
+  name          String
+  documentType  DocumentType
+  fileUrl       String
+  fileName      String
+  fileSize      Int?
+  expiryDate    DateTime?
+  isVerified    Boolean      @default(false)
+  verifiedById  String?
+  verifiedAt    DateTime?
+  notes         String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  employee      Employee @relation(fields: [employeeId], references: [id])
+}
+
+// ─────────────────────────────────────────────
+// ANNOUNCEMENTS & NOTIFICATIONS
+// ─────────────────────────────────────────────
+model Announcement {
+  id              String             @id @default(uuid())
+  organizationId  String
+  title           String
+  content         String
+  isPinned        Boolean            @default(false)
+  isPublished     Boolean            @default(false)
+  publishedAt     DateTime?
+  expiresAt       DateTime?
+  targetAudience  String[]           @default(["ALL"])
+  attachmentUrls  String[]           @default([])
+  createdById     String
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  organization    Organization @relation(fields: [organizationId], references: [id])
+}
+
+model Notification {
+  id              String             @id @default(uuid())
+  userId          String
+  title           String
+  message         String
+  notificationType NotificationType
+  referenceId     String?
+  referenceType   String?
+  isRead          Boolean            @default(false)
+  readAt          DateTime?
+  createdAt       DateTime           @default(now())
+
+  user            User @relation(fields: [userId], references: [id])
+
+  @@index([userId, isRead])
+}
+
+// ─────────────────────────────────────────────
+// CUSTOM FIELDS
+// ─────────────────────────────────────────────
+model CustomField {
+  id             String        @id @default(uuid())
+  organizationId String
+  entityType     String        // "EMPLOYEE"
+  fieldName      String
+  fieldLabel     String
+  fieldType      FieldType
+  options        String[]      @default([])
+  isRequired     Boolean       @default(false)
+  isActive       Boolean       @default(true)
+  sortOrder      Int           @default(0)
+  createdAt      DateTime      @default(now())
+
+  values         CustomFieldValue[]
+}
+
+model CustomFieldValue {
+  id           String   @id @default(uuid())
+  fieldId      String
+  employeeId   String
+  value        String?
+  updatedAt    DateTime @updatedAt
+
+  field        CustomField @relation(fields: [fieldId], references: [id])
+  employee     Employee    @relation(fields: [employeeId], references: [id])
+
+  @@unique([fieldId, employeeId])
+}
+
+// ─────────────────────────────────────────────
+// AUDIT LOG
+// ─────────────────────────────────────────────
+model AuditLog {
+  id           String   @id @default(uuid())
+  userId       String
+  employeeId   String?
+  action       String
+  module       String
+  entityId     String?
+  entityType   String?
+  oldValues    Json?
+  newValues    Json?
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+
+  user         User      @relation("AuditUser", fields: [userId], references: [id])
+  employee     Employee? @relation("AuditEmployee", fields: [employeeId], references: [id])
+
+  @@index([userId])
+  @@index([module])
+  @@index([createdAt])
+}
+
+// ─────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
+enum BloodGroup {
+  A_POS
+  A_NEG
+  B_POS
+  B_NEG
+  AB_POS
+  AB_NEG
+  O_POS
+  O_NEG
+}
+
+enum MaritalStatus {
+  SINGLE
+  MARRIED
+  DIVORCED
+  WIDOWED
+}
+
+enum EmploymentStatus {
+  ACTIVE
+  PROBATION
+  ON_LEAVE
+  RESIGNED
+  TERMINATED
+  RETIRED
+  DECEASED
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERN
+  CONSULTANT
+}
+
+enum BankAccountType {
+  SAVINGS
+  CURRENT
+  SALARY
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  HR_ADMIN
+  MANAGER
+  EMPLOYEE
+}
+
+enum AttendanceSource {
+  APP_GPS
+  APP_WIFI
+  APP_FACE
+  WEB
+  MANUAL
+  BULK_UPLOAD
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  HALF_DAY
+  LATE
+  ON_LEAVE
+  HOLIDAY
+  WEEKEND
+  WORK_FROM_HOME
+}
+
+enum LeaveStatus {
+  PENDING
+  MGR_APPROVED
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum HalfDayPeriod {
+  FIRST_HALF
+  SECOND_HALF
+}
+
+enum HolidayType {
+  NATIONAL
+  OPTIONAL
+  RESTRICTED
+  CUSTOM
+}
+
+enum AccrualType {
+  ANNUAL
+  MONTHLY
+  QUARTERLY
+}
+
+enum ComponentType {
+  EARNING
+  DEDUCTION
+  STATUTORY
+}
+
+enum CalcType {
+  FIXED
+  PERCENTAGE
+  FORMULA
+}
+
+enum PayrollStatus {
+  DRAFT
+  PROCESSING
+  PROCESSED
+  APPROVED
+  PAID
+}
+
+enum TaxRegime {
+  OLD
+  NEW
+}
+
+enum LoanType {
+  ADVANCE
+  PERSONAL
+  HOME
+  VEHICLE
+  EDUCATION
+}
+
+enum LoanStatus {
+  PENDING
+  APPROVED
+  DISBURSED
+  CLOSED
+  REJECTED
+}
+
+enum AssetCondition {
+  EXCELLENT
+  GOOD
+  FAIR
+  POOR
+  DAMAGED
+  DISPOSED
+}
+
+enum AssetStatus {
+  AVAILABLE
+  ASSIGNED
+  UNDER_MAINTENANCE
+  DISPOSED
+  LOST
+}
+
+enum DocumentType {
+  AADHAR
+  PAN
+  PASSPORT
+  DRIVING_LICENSE
+  EDUCATIONAL
+  EXPERIENCE
+  OFFER_LETTER
+  CONTRACT
+  OTHER
+}
+
+enum NotificationType {
+  ATTENDANCE
+  LEAVE
+  PAYROLL
+  ASSET
+  DOCUMENT
+  ANNOUNCEMENT
+  SYSTEM
+}
+
+enum FieldType {
+  TEXT
+  NUMBER
+  DATE
+  SELECT
+  MULTI_SELECT
+  BOOLEAN
+  URL
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MODULE: 3-LAYER RBAC
+// ═══════════════════════════════════════════════════════════════
+
+/// Atomic permission unit — "module:resource:action"
+model Permission {
+  id          String   @id @default(uuid())
+  key         String   @unique           // e.g. "attendance:clockin:create"
+  module      String                     // "attendance"
+  resource    String                     // "clockin"
+  action      String                     // "create" | "read" | "update" | "delete" | "export" | "approve"
+  label       String                     // Human-readable
+  description String?
+  isSystem    Boolean  @default(false)   // Seeded system permissions, not deletable
+  createdAt   DateTime @default(now())
+
+  rolePermissions    RolePermission[]
+  userOverrides      UserPermissionOverride[]
+}
+
+/// Custom composable role
+model Role {
+  id             String   @id @default(uuid())
+  organizationId String
+  name           String
+  description    String?
+  isSystem       Boolean  @default(false) // Super Admin, HR Admin, etc — not editable
+  color          String   @default("#3B82F6")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization   Organization   @relation(fields: [organizationId], references: [id])
+  permissions    RolePermission[]
+  userRoles      UserRole_[]
+
+  @@unique([organizationId, name])
+}
+
+model RolePermission {
+  id           String   @id @default(uuid())
+  roleId       String
+  permissionId String
+  scopeType    ScopeType @default(GLOBAL)  // GLOBAL | DEPARTMENT | BRANCH
+  scopeIds     String[]  @default([])      // dept/branch IDs if scoped
+  grantedAt    DateTime @default(now())
+
+  role       Role       @relation(fields: [roleId], references: [id])
+  permission Permission @relation(fields: [permissionId], references: [id])
+
+  @@unique([roleId, permissionId])
+}
+
+/// Many roles per user (union of permissions)
+model UserRole_ {
+  id         String    @id @default(uuid())
+  userId     String
+  roleId     String
+  assignedAt DateTime  @default(now())
+  expiresAt  DateTime?               // Time-bound assignment
+  assignedBy String
+  isActive   Boolean   @default(true)
+
+  user User_  @relation(fields: [userId], references: [id])
+  role Role   @relation(fields: [roleId], references: [id])
+
+  @@unique([userId, roleId])
+}
+
+/// Per-user permission override (grant or deny specific permissions)
+model UserPermissionOverride {
+  id           String      @id @default(uuid())
+  userId       String
+  permissionId String
+  effect       PermEffect  @default(GRANT) // GRANT | DENY
+  scopeType    ScopeType   @default(GLOBAL)
+  scopeIds     String[]    @default([])
+  reason       String?
+  expiresAt    DateTime?
+  grantedById  String
+  grantedAt    DateTime    @default(now())
+
+  user       User_      @relation(fields: [userId], references: [id])
+  permission Permission @relation(fields: [permissionId], references: [id])
+
+  @@unique([userId, permissionId])
+}
+
+/// New normalized User model (extends existing)
+model User_ {
+  id             String   @id @default(uuid())
+  organizationId String
+  employeeId     String?  @unique
+  email          String   @unique
+  passwordHash   String
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  userRoles       UserRole_[]
+  overrides       UserPermissionOverride[]
+  accessReviewees AccessReviewAssignment[] @relation("ReviewTarget")
+  accessReviewers AccessReviewAssignment[] @relation("Reviewer")
+}
+
+/// Quarterly access review workflow
+model AccessReview {
+  id             String             @id @default(uuid())
+  organizationId String
+  name           String
+  description    String?
+  status         AccessReviewStatus @default(PENDING)
+  dueDate        DateTime
+  createdById    String
+  completedAt    DateTime?
+  createdAt      DateTime           @default(now())
+
+  assignments    AccessReviewAssignment[]
+}
+
+model AccessReviewAssignment {
+  id           String             @id @default(uuid())
+  reviewId     String
+  targetUserId String
+  reviewerId   String
+  decision     ReviewDecision?
+  notes        String?
+  reviewedAt   DateTime?
+  createdAt    DateTime           @default(now())
+
+  review     AccessReview @relation(fields: [reviewId], references: [id])
+  target     User_        @relation("ReviewTarget", fields: [targetUserId], references: [id])
+  reviewer   User_        @relation("Reviewer", fields: [reviewerId], references: [id])
+}
+
+enum ScopeType {
+  GLOBAL
+  DEPARTMENT
+  BRANCH
+}
+enum PermEffect {
+  GRANT
+  DENY
+}
+enum AccessReviewStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+enum ReviewDecision {
+  RETAIN
+  REVOKE
+  MODIFY
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MODULE: ASSET REPAIR REQUEST SYSTEM
+// ═══════════════════════════════════════════════════════════════
+
+model RepairTicket {
+  id              String       @id @default(uuid())
+  organizationId  String
+  ticketNumber    String       @unique
+  assetId         String
+  reportedById    String       // Employee
+  assignedToId    String?      // IT Admin
+  loanerAssetId   String?
+
+  title           String
+  description     String
+  priority        RepairPriority @default(MEDIUM)
+  status          RepairStatus   @default(SUBMITTED)
+  category        RepairCategory @default(HARDWARE)
+
+  // SLA
+  slaHours        Int          @default(24)
+  slaDeadline     DateTime?
+  slaBreach       Boolean      @default(false)
+  escalatedAt     DateTime?
+
+  // Resolution
+  diagnosis       String?
+  resolution      String?
+  repairCost      Float?
+  vendor          String?
+  partsCost       Float?
+  laborCost       Float?
+
+  // Timeline
+  submittedAt     DateTime     @default(now())
+  reviewedAt      DateTime?
+  approvedAt      DateTime?
+  repairStartedAt DateTime?
+  qcAt            DateTime?
+  closedAt        DateTime?
+
+  // Rating
+  satisfactionScore Int?       // 1-5
+  satisfactionNote  String?
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  asset           Asset        @relation(fields: [assetId], references: [id])
+  photos          RepairPhoto[]
+  timeline        RepairTimeline[]
+  comments        RepairComment[]
+
+  @@index([organizationId, status])
+}
+
+model RepairPhoto {
+  id       String @id @default(uuid())
+  ticketId String
+  url      String
+  caption  String?
+  uploadedAt DateTime @default(now())
+
+  ticket   RepairTicket @relation(fields: [ticketId], references: [id])
+}
+
+model RepairTimeline {
+  id          String       @id @default(uuid())
+  ticketId    String
+  fromStatus  RepairStatus?
+  toStatus    RepairStatus
+  changedById String
+  note        String?
+  changedAt   DateTime     @default(now())
+
+  ticket      RepairTicket @relation(fields: [ticketId], references: [id])
+}
+
+model RepairComment {
+  id         String   @id @default(uuid())
+  ticketId   String
+  authorId   String
+  message    String
+  isInternal Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  ticket     RepairTicket @relation(fields: [ticketId], references: [id])
+}
+
+enum RepairPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+enum RepairCategory {
+  HARDWARE
+  SOFTWARE
+  NETWORK
+  PERIPHERAL
+  OTHER
+}
+enum RepairStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  IN_REPAIR
+  QC_PENDING
+  QC_FAILED
+  CLOSED
+  CANCELLED
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MODULE: PERFORMANCE MANAGEMENT
+// ═══════════════════════════════════════════════════════════════
+
+model ReviewCycle {
+  id             String      @id @default(uuid())
+  organizationId String
+  name           String
+  cycleType      CycleType   @default(ANNUAL)
+  startDate      DateTime
+  endDate        DateTime
+  status         CycleStatus @default(DRAFT)
+  selfReviewDue  DateTime?
+  managerDue     DateTime?
+  hrDue          DateTime?
+  createdAt      DateTime    @default(now())
+
+  goals          Goal[]
+  reviews        PerformanceReview[]
+  feedbacks      Feedback360[]
+}
+
+model Goal {
+  id             String     @id @default(uuid())
+  cycleId        String?
+  employeeId     String
+  title          String
+  description    String?
+  category       GoalCategory @default(INDIVIDUAL)
+  goalType       GoalType     @default(OKR)
+  weight         Float      @default(1)
+  targetValue    Float?
+  actualValue    Float?
+  unit           String?    // "%", "count", "₹"
+  startDate      DateTime
+  dueDate        DateTime
+  status         GoalStatus @default(ACTIVE)
+  progress       Int        @default(0) // 0-100
+  managerId      String?
+  approvedAt     DateTime?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  cycle          ReviewCycle? @relation(fields: [cycleId], references: [id])
+  employee       Employee     @relation(fields: [employeeId], references: [id])
+  updates        GoalUpdate[]
+}
+
+model GoalUpdate {
+  id         String   @id @default(uuid())
+  goalId     String
+  progress   Int
+  note       String?
+  updatedById String
+  createdAt  DateTime @default(now())
+
+  goal       Goal @relation(fields: [goalId], references: [id])
+}
+
+model PerformanceReview {
+  id             String       @id @default(uuid())
+  cycleId        String
+  employeeId     String
+  reviewerId     String
+  reviewType     ReviewType   @default(MANAGER)
+  status         ReviewStatus @default(DRAFT)
+
+  // Ratings (1-5 scale)
+  overallRating       Float?
+  technicalRating     Float?
+  communicationRating Float?
+  leadershipRating    Float?
+  teamworkRating      Float?
+  initiativeRating    Float?
+
+  // Comments
+  strengths       String?
+  improvements    String?
+  managerComments String?
+  hrComments      String?
+  employeeResponse String?
+
+  // Bonus
+  bonusRecommended  Float?
+  incrementPercent  Float?
+  promotionFlag     Boolean @default(false)
+
+  submittedAt  DateTime?
+  acknowledgedAt DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  cycle        ReviewCycle @relation(fields: [cycleId], references: [id])
+  employee     Employee    @relation(fields: [employeeId], references: [id])
+}
+
+model Feedback360 {
+  id          String    @id @default(uuid())
+  cycleId     String
+  subjectId   String    // Employee being reviewed
+  giverId     String    // Employee giving feedback
+  relationship FeedbackRelation
+  ratings     Json      // { communication: 4, teamwork: 5, ... }
+  strengths   String?
+  improvements String?
+  isAnonymous Boolean   @default(true)
+  submittedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  cycle       ReviewCycle @relation(fields: [cycleId], references: [id])
+}
+
+model PIPPlan {
+  id             String    @id @default(uuid())
+  employeeId     String
+  issuedById     String
+  startDate      DateTime
+  endDate        DateTime
+  reason         String
+  objectives     String
+  supportProvided String?
+  status         PIPStatus @default(ACTIVE)
+  outcome        String?
+  closedAt       DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  employee       Employee  @relation(fields: [employeeId], references: [id])
+  checkIns       PIPCheckIn[]
+}
+
+model PIPCheckIn {
+  id         String   @id @default(uuid())
+  pipId      String
+  date       DateTime
+  notes      String
+  rating     Int      // 1-5
+  conductedById String
+  createdAt  DateTime @default(now())
+
+  pip        PIPPlan @relation(fields: [pipId], references: [id])
+}
+
+enum CycleType {
+  ANNUAL
+  SEMI_ANNUAL
+  QUARTERLY
+}
+enum CycleStatus {
+  DRAFT
+  ACTIVE
+  CLOSED
+}
+enum GoalCategory {
+  INDIVIDUAL
+  TEAM
+  COMPANY
+}
+enum GoalType {
+  OKR
+  SMART
+  KPI
+}
+enum GoalStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  ON_HOLD
+}
+enum ReviewType {
+  SELF
+  MANAGER
+  PEER
+  HR_FINAL
+}
+enum ReviewStatus {
+  DRAFT
+  SUBMITTED
+  ACKNOWLEDGED
+  CLOSED
+}
+enum FeedbackRelation {
+  MANAGER
+  PEER
+  DIRECT_REPORT
+  CROSS_FUNCTIONAL
+}
+enum PIPStatus {
+  ACTIVE
+  COMPLETED_SUCCESS
+  COMPLETED_FAIL
+  WITHDRAWN
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MODULE: ESS HELPDESK
+// ═══════════════════════════════════════════════════════════════
+
+model HelpdeskTicket {
+  id              String           @id @default(uuid())
+  organizationId  String
+  ticketNumber    String           @unique
+  raisedById      String
+  assignedToId    String?
+  categoryId      String?
+
+  subject         String
+  description     String
+  priority        TicketPriority   @default(MEDIUM)
+  status          TicketStatus     @default(OPEN)
+  ticketType      TicketType       @default(IT)
+  channel         TicketChannel    @default(WEB)
+
+  // SLA
+  slaHours        Int              @default(8)
+  slaDeadline     DateTime?
+  slaBreach       Boolean          @default(false)
+  firstResponseAt DateTime?
+  resolvedAt      DateTime?
+  closedAt        DateTime?
+
+  // CSAT
+  csatScore       Int?             // 1-5
+  csatFeedback    String?
+  csatSubmittedAt DateTime?
+
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  category        HelpdeskCategory?  @relation(fields: [categoryId], references: [id])
+  comments        TicketComment[]
+  attachments     TicketAttachment[]
+  tags            TicketTag[]
+
+  @@index([organizationId, status])
+}
+
+model HelpdeskCategory {
+  id             String   @id @default(uuid())
+  organizationId String
+  name           String
+  categoryType   TicketType
+  slaHours       Int      @default(8)
+  teamId         String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  tickets        HelpdeskTicket[]
+}
+
+model TicketComment {
+  id         String   @id @default(uuid())
+  ticketId   String
+  authorId   String
+  message    String
+  isInternal Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  ticket     HelpdeskTicket @relation(fields: [ticketId], references: [id])
+}
+
+model TicketAttachment {
+  id        String   @id @default(uuid())
+  ticketId  String
+  url       String
+  filename  String
+  fileSize  Int?
+  createdAt DateTime @default(now())
+
+  ticket    HelpdeskTicket @relation(fields: [ticketId], references: [id])
+}
+
+model TicketTag {
+  id       String @id @default(uuid())
+  ticketId String
+  tag      String
+
+  ticket   HelpdeskTicket @relation(fields: [ticketId], references: [id])
+  @@unique([ticketId, tag])
+}
+
+model KnowledgeArticle {
+  id             String   @id @default(uuid())
+  organizationId String
+  title          String
+  content        String   // Markdown
+  category       String
+  articleType    TicketType
+  tags           String[]
+  isPublished    Boolean  @default(false)
+  views          Int      @default(0)
+  helpful        Int      @default(0)
+  notHelpful     Int      @default(0)
+  createdById    String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  ON_HOLD
+  RESOLVED
+  CLOSED
+}
+enum TicketType {
+  IT
+  HR
+  FACILITIES
+  PAYROLL
+  OTHER
+}
+enum TicketChannel {
+  WEB
+  MOBILE
+  EMAIL
+  WALK_IN
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MODULE: OFFBOARDING WORKFLOW
+// ═══════════════════════════════════════════════════════════════
+
+model OffboardingCase {
+  id             String          @id @default(uuid())
+  organizationId String
+  employeeId     String          @unique
+  initiatedById  String
+  exitType       ExitType
+  resignationDate DateTime?
+  lastWorkingDay  DateTime
+  status         OffboardStatus  @default(INITIATED)
+  exitInterviewDone Boolean     @default(false)
+  fnfSettled      Boolean        @default(false)
+  fnfAmount       Float?
+  fnfPaidAt       DateTime?
+  notes           String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  employee        Employee       @relation(fields: [employeeId], references: [id])
+  checklistItems  OffboardingChecklistItem[]
+  clearances      ClearanceSignOff[]
+  exitInterview   ExitInterview?
+  permissionsRevoked Boolean     @default(false)
+  permissionsRevokedAt DateTime?
+}
+
+model OffboardingChecklistItem {
+  id         String          @id @default(uuid())
+  caseId     String
+  taskName   String
+  department String
+  ownerId    String?
+  isRequired Boolean         @default(true)
+  status     ChecklistStatus @default(PENDING)
+  dueDate    DateTime?
+  completedAt DateTime?
+  notes      String?
+  createdAt  DateTime        @default(now())
+
+  case       OffboardingCase @relation(fields: [caseId], references: [id])
+}
+
+model ClearanceSignOff {
+  id          String          @id @default(uuid())
+  caseId      String
+  department  String
+  signOffById String
+  status      ClearanceStatus @default(PENDING)
+  remarks     String?
+  signedAt    DateTime?
+  createdAt   DateTime        @default(now())
+
+  case        OffboardingCase @relation(fields: [caseId], references: [id])
+}
+
+model ExitInterview {
+  id               String    @id @default(uuid())
+  caseId           String    @unique
+  conductedById    String
+  conductedAt      DateTime
+  primaryReason    ExitReason
+  reasonDetail     String?
+  wouldRejoin      Boolean?
+  npsScore         Int?      // 0-10
+  feedback         String?
+  recommendation   String?
+  isConfidential   Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+
+  case             OffboardingCase @relation(fields: [caseId], references: [id])
+}
+
+enum ExitType {
+  RESIGNATION
+  TERMINATION
+  RETIREMENT
+  MUTUAL_SEPARATION
+  ABSCONDING
+  DEATH
+}
+enum OffboardStatus {
+  INITIATED
+  IN_PROGRESS
+  PENDING_CLEARANCE
+  FNF_PENDING
+  COMPLETED
+}
+enum ChecklistStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  SKIPPED
+}
+enum ClearanceStatus {
+  PENDING
+  CLEARED
+  BLOCKED
+}
+enum ExitReason {
+  BETTER_OPPORTUNITY
+  COMPENSATION
+  WORK_CULTURE
+  MANAGEMENT
+  RELOCATION
+  PERSONAL
+  RETIREMENT
+  OTHER
+}
