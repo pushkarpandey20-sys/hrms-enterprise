@@ -30,11 +30,16 @@ async function main() {
     prisma.department.upsert({ where: { organizationId_code: { organizationId: org.id, code: 'SALES' } }, update: {}, create: { organizationId: org.id, name: 'Sales', code: 'SALES' } }),
   ]);
 
-  // Designations
+  // Designations (findOrCreate to avoid duplicates on re-runs)
+  async function findOrCreateDesignation(name: string, level: number) {
+    const existing = await prisma.designation.findFirst({ where: { organizationId: org.id, name } });
+    if (existing) return existing;
+    return prisma.designation.create({ data: { organizationId: org.id, name, level } });
+  }
   const [cto, swe, hm] = await Promise.all([
-    prisma.designation.create({ data: { organizationId: org.id, name: 'CTO', level: 10 } }),
-    prisma.designation.create({ data: { organizationId: org.id, name: 'Software Engineer', level: 3 } }),
-    prisma.designation.create({ data: { organizationId: org.id, name: 'HR Manager', level: 5 } }),
+    findOrCreateDesignation('CTO', 10),
+    findOrCreateDesignation('Software Engineer', 3),
+    findOrCreateDesignation('HR Manager', 5),
   ]);
 
   // Super admin employee
@@ -113,7 +118,6 @@ async function main() {
     prisma.assetCategory.upsert({ where: { id: 'cat-vehicle' }, update: {}, create: { id: 'cat-vehicle', name: 'Vehicles' } }),
   ]);
 
-
   // HR user
   const hrEmployee = await prisma.employee.upsert({
     where: { employeeCode: 'EMP0002' },
@@ -151,6 +155,41 @@ async function main() {
     update: {},
     create: { organizationId: org.id, employeeId: empEmployee.id, email: 'rahul@wheeley.in', passwordHash: empPasswordHash, role: 'EMPLOYEE' },
   });
+
+  // ── Leave balances for ALL active employees (current year) ───────────────────
+  const currentYear = new Date().getFullYear();
+  const allEmployees = await prisma.employee.findMany({
+    where: { organizationId: org.id, status: 'ACTIVE' },
+  });
+  const allLeaveTypes = await prisma.leaveType.findMany({
+    where: { organizationId: org.id, isActive: true },
+  });
+
+  for (const emp of allEmployees) {
+    for (const lt of allLeaveTypes) {
+      await prisma.leaveBalance.upsert({
+        where: {
+          employeeId_leaveTypeId_year: {
+            employeeId: emp.id,
+            leaveTypeId: lt.id,
+            year: currentYear,
+          },
+        },
+        update: {},
+        create: {
+          employeeId: emp.id,
+          leaveTypeId: lt.id,
+          year: currentYear,
+          totalDays: lt.annualAllocation,
+          remainingDays: lt.annualAllocation,
+          usedDays: 0,
+          pendingDays: 0,
+          carriedOver: 0,
+        },
+      });
+    }
+  }
+  console.log(`✅ Leave balances seeded for ${allEmployees.length} employees`);
 
   console.log('✅ Seed complete');
 }
