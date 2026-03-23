@@ -3,6 +3,9 @@ import { ApiError } from '../../../shared/utils/ApiError';
 import QRCode from 'qrcode';
 import ExcelJS from 'exceljs';
 import { cloudinary } from '../../../config/cloudinary';
+import winston from 'winston';
+
+const logger = winston.createLogger({ transports: [new winston.transports.Console()] });
 
 export class AssetService {
   async create(orgId: string, data: any) {
@@ -13,20 +16,24 @@ export class AssetService {
       data: { ...data, organizationId: orgId, assetCode },
     });
 
-    // Generate QR code
-    const qrData = JSON.stringify({ assetId: asset.id, code: asset.assetCode, name: asset.name });
-    const qrBuffer = await QRCode.toBuffer(qrData);
-    const qrResult = await new Promise<{ secure_url: string }>((resolve, reject) => {
-      cloudinary.uploader.upload_stream(
-        { folder: 'hrms/qrcodes', resource_type: 'image' },
-        (err, res) => err ? reject(err) : resolve(res as any),
-      ).end(qrBuffer);
-    });
-
-    return prisma.asset.update({
-      where: { id: asset.id },
-      data: { qrCodeUrl: qrResult.secure_url },
-    });
+    // Generate QR code (non-fatal if cloudinary fails)
+    try {
+      const qrData = JSON.stringify({ assetId: asset.id, code: asset.assetCode, name: asset.name });
+      const qrBuffer = await QRCode.toBuffer(qrData);
+      const qrResult = await new Promise<{ secure_url: string }>((resolve, reject) => {
+        cloudinary.uploader.upload_stream(
+          { folder: 'hrms/qrcodes', resource_type: 'image' },
+          (err, res) => err ? reject(err) : resolve(res as any),
+        ).end(qrBuffer);
+      });
+      return prisma.asset.update({
+        where: { id: asset.id },
+        data: { qrCodeUrl: qrResult.secure_url },
+      });
+    } catch (err) {
+      logger.warn('QR code upload failed (non-fatal):', err);
+      return asset;
+    }
   }
 
   async assign(assetId: string, employeeId: string, assignedById: string, notes?: string) {
