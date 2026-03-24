@@ -8,8 +8,7 @@ import {
 import { attendanceApi } from '@/services/api';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/components/ui/use-toast';
-
+ import { toast } from 'sonner';
 function formatTime(date: string | null | undefined) {
   if (!date) return '—';
   return new Date(date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
@@ -36,7 +35,7 @@ const statusColors: Record<string, string> = {
 export default function MyAttendancePage() {
   const qc = useQueryClient();
   const { toast } = useToast();
-  const videoRef = useRef<HTMLVideoElement>(null);
+main
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
