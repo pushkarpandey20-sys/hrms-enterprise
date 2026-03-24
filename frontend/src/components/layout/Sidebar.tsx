@@ -2,9 +2,9 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Users, Clock, Calendar, CreditCard, Package,
-  BarChart3, Bell, Settings, LogOut, ChevronLeft, ChevronRight,
-  Building2, TreePine, Shield, Wrench, Target, HelpCircle, LogOut as ExitIcon,
-  FileText, MapPin, Wifi,
+  BarChart3, Settings, LogOut, ChevronLeft, ChevronRight,
+  Building2, TreePine, Shield, Wrench, Target, HelpCircle,
+  FileText, Wifi,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUIStore } from '@/stores/uiStore';
@@ -59,7 +59,7 @@ const navGroups: NavGroup[] = [
       { to: '/repair', icon: Wrench, label: 'Asset Repair', roles: ['SUPER_ADMIN', 'HR_ADMIN'] },
       { to: '/performance', icon: Target, label: 'Performance', roles: ['SUPER_ADMIN', 'HR_ADMIN', 'MANAGER'] },
       { to: '/helpdesk', icon: HelpCircle, label: 'Helpdesk' },
-      { to: '/offboarding', icon: ExitIcon, label: 'Offboarding', roles: ['SUPER_ADMIN', 'HR_ADMIN'] },
+      { to: '/offboarding', icon: LogOut, label: 'Offboarding', roles: ['SUPER_ADMIN', 'HR_ADMIN'] },
     ],
   },
 ];
@@ -143,11 +143,11 @@ export default function Sidebar() {
       {/* Bottom actions */}
       <div className="border-t border-border p-2 space-y-0.5 flex-shrink-0">
         <NavLink to="/settings" className={({ isActive }) => cn('sidebar-link', isActive && 'active', sidebarCollapsed && 'justify-center')}>
-          <Settings className="w-4 h-4 flex-shring-0" />
+          <Settings className="w-4 h-4 flex-shrink-0" />
           {!sidebarCollapsed && <span>Settings</span>}
         </NavLink>
         <button onClick={handleLogout} className={cn('sidebar-link w-full hover:text-red-400', sidebarCollapsed && 'justify-center')}>
-          <LogOut className="w-4 h-4 flex-shring-0" />
+          <LogOut className="w-4 h-4 flex-shrink-0" />
           {!sidebarCollapsed && <span>Logout</span>}
         </button>
       </div>
