@@ -61,11 +61,28 @@ export const employeeApi = {
 export const attendanceApi = {
   clockIn: (data: object) => api.post('/attendance/clock-in', data),
   clockOut: (data: object) => api.post('/attendance/clock-out', data),
+  clockInWithFile: (data: FormData) => api.post('/attendance/clock-in', data, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  clockOutWithFile: (data: FormData) => api.post('/attendance/clock-out', data, { headers: { 'Content-Type': 'multipart/form-data' } }),
   getMyAttendance: (params?: object) => api.get('/attendance/my', { params }),
   getDashboard: () => api.get('/attendance/dashboard'),
   getEmployeeAttendance: (id: string, params?: object) => api.get(`/attendance/employee/${id}`, { params }),
   adminOverride: (data: object) => api.post('/attendance/override', data),
   exportRegister: (params: object) => api.get('/attendance/export', { params, responseType: 'blob' }),
+  // Hotspot management
+  listHotspots: () => api.get('/attendance/hotspots'),
+  createHotspot: (data: object) => api.post('/attendance/hotspots', data),
+  updateHotspot: (id: string, data: object) => api.put(`/attendance/hotspots/${id}`, data),
+  deleteHotspot: (id: string) => api.delete(`/attendance/hotspots/${id}`),
+  assignHotspot: (employeeId: string, hotspotId: string) => api.post(`/attendance/employee/${employeeId}/hotspots/${hotspotId}`),
+  removeHotspot: (employeeId: string, hotspotId: string) => api.delete(`/attendance/employee/${employeeId}/hotspots/${hotspotId}`),
+  getEmployeeHotspots: (employeeId: string) => api.get(`/attendance/employee/${employeeId}/hotspots`),
+  // GeoFence management
+  listGeoFences: () => api.get('/attendance/geofences'),
+  createGeoFence: (data: object) => api.post('/attendance/geofences', data),
+  updateGeoFence: (id: string, data: object) => api.put(`/attendance/geofences/${id}`, data),
+  deleteGeoFence: (id: string) => api.delete(`/attendance/geofences/${id}`),
+  assignGeoFence: (employeeId: string, fenceId: string) => api.post(`/attendance/employee/${employeeId}/geofences/${fenceId}`),
+  removeGeoFence: (employeeId: string, fenceId: string) => api.delete(`/attendance/employee/${employeeId}/geofences/${fenceId}`),
 };
 
 export const leaveApi = {
