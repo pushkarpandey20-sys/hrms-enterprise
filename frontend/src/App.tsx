@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { Toaster } from './components/ui/toaster';
@@ -51,13 +52,13 @@ import PerformancePage from './pages/performance/PerformancePage';
 import HelpdeskPage from './pages/helpdesk/HelpdeskPage';
 import OffboardingPage from './pages/offboarding/OffboardingPage';
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
+function ProtectedRoute({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuthStore();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
 
-function RoleRoute({ children, roles }: { children: React.ReactNode; roles: string[] }) {
+function RoleRoute({ children, roles }: { children: ReactNode; roles: string[] }) {
   const { isAuthenticated, user } = useAuthStore();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   if (!roles.includes(user?.role || '')) return <Navigate to="/dashboard" replace />;
