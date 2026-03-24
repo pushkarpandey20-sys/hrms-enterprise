@@ -4,12 +4,11 @@ import { motion } from 'framer-motion';
 import { Plus, Wifi, MapPin, Trash2, Users, UserPlus, UserMinus, X } from 'lucide-react';
 import { attendanceApi, employeeApi } from '@/services/api';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/components/ui/use-toast';
-
+import { toast } from 'sonner';
 export default function HotspotsPage() {
   const qc = useQueryClient();
   const { toast } = useToast();
-  const [tab, setTab] = useState<'wifi' | 'gps'>('wifi');
+main
   const [showAddHotspot, setShowAddHotspot] = useState(false);
   const [showAddFence, setShowAddFence] = useState(false);
   const [assignModal, setAssignModal] = useState<{ type: 'wifi' | 'gps'; id: string; name: string } | null>(null);
